@@ -5,33 +5,12 @@ import XCTest
 class PublicKeyTests: XCTestCase {
     // MARK: Actual Request tests
 
-    func testPostPublicKey() {
+    func testPostPublicKey() async throws {
         let config = TokenConfiguration("user:12345")
         let headers = Helper.makeAuthHeader(username: "user", password: "12345")
-
-        let session = OctoKitURLTestSession(expectedURL: "https://api.github.com/user/keys", expectedHTTPMethod: "POST", expectedHTTPHeaders: headers, jsonFile: "public_key", statusCode: 201)
-        let task = Octokit(config, session: session).postPublicKey(publicKey: "test-key", title: "test title") { response in
-            switch response {
-            case let .success(publicKey):
-                XCTAssertEqual(publicKey, "test-key")
-            case .failure:
-                XCTFail("should not get an error")
-            }
-        }
-        XCTAssertNotNil(task)
-        XCTAssertTrue(session.wasCalled)
-    }
-
-    #if compiler(>=5.5.2) && canImport(_Concurrency)
-    @available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
-    func testPostPublicKeyAsync() async throws {
-        let config = TokenConfiguration("user:12345")
-        let headers = Helper.makeAuthHeader(username: "user", password: "12345")
-
         let session = OctoKitURLTestSession(expectedURL: "https://api.github.com/user/keys", expectedHTTPMethod: "POST", expectedHTTPHeaders: headers, jsonFile: "public_key", statusCode: 201)
         let publicKey = try await Octokit(config, session: session).postPublicKey(publicKey: "test-key", title: "test title")
         XCTAssertEqual(publicKey, "test-key")
         XCTAssertTrue(session.wasCalled)
     }
-    #endif
 }

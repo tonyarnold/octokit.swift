@@ -1,0 +1,357 @@
+import Foundation
+import RequestKit
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
+
+// MARK: model
+
+public enum Openness: String, Codable {
+    case open
+    case closed
+    case all
+}
+
+open class Issue: Codable {
+    open private(set) var id: Int
+    open var url: URL?
+    open var repositoryURL: URL?
+    open var commentsURL: URL?
+    open var eventsURL: URL?
+    open var htmlURL: URL?
+    open var number: Int
+    open var state: Openness?
+    open var title: String?
+    open var body: String?
+    open var user: User?
+    open var labels: [Label]?
+    open var assignee: User?
+    open var milestone: Milestone?
+    open var locked: Bool?
+    open var comments: Int?
+    open var closedAt: Date?
+    open var createdAt: Date?
+    open var updatedAt: Date?
+    open var closedBy: User?
+
+    public init(id: Int = -1,
+                url: URL? = nil,
+                repositoryURL: URL? = nil,
+                commentsURL: URL? = nil,
+                eventsURL: URL? = nil,
+                htmlURL: URL? = nil,
+                number: Int,
+                state: Openness? = nil,
+                title: String? = nil,
+                body: String? = nil,
+                user: User? = nil,
+                labels: [Label]? = nil,
+                assignee: User? = nil,
+                milestone: Milestone? = nil,
+                locked: Bool? = nil,
+                comments: Int? = nil,
+                closedAt: Date? = nil,
+                createdAt: Date? = nil,
+                updatedAt: Date? = nil,
+                closedBy: User? = nil) {
+        self.id = id
+        self.url = url
+        self.repositoryURL = repositoryURL
+        self.commentsURL = commentsURL
+        self.eventsURL = eventsURL
+        self.htmlURL = htmlURL
+        self.number = number
+        self.state = state
+        self.title = title
+        self.body = body
+        self.user = user
+        self.labels = labels
+        self.assignee = assignee
+        self.milestone = milestone
+        self.locked = locked
+        self.comments = comments
+        self.closedAt = closedAt
+        self.createdAt = createdAt
+        self.updatedAt = updatedAt
+        self.closedBy = closedBy
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case url
+        case repositoryURL = "repository_url"
+        case commentsURL = "comments_url"
+        case eventsURL = "events_url"
+        case htmlURL = "html_url"
+        case number
+        case state
+        case title
+        case body
+        case user
+        case labels
+        case assignee
+        case milestone
+        case locked
+        case comments
+        case closedAt = "closed_at"
+        case createdAt = "created_at"
+        case updatedAt = "updated_at"
+        case closedBy = "closed_by"
+    }
+}
+
+public struct Comment: Codable {
+    public let id: Int
+    public let url: URL
+    public let htmlURL: URL
+    public let body: String
+    public let user: User
+    public let createdAt: Date
+    public let updatedAt: Date
+    public let reactions: Reactions?
+
+    enum CodingKeys: String, CodingKey {
+        case id, url, body, user, reactions
+        case htmlURL = "html_url"
+        case createdAt = "created_at"
+        case updatedAt = "updated_at"
+    }
+}
+
+// MARK: request
+
+public extension Octokit {
+    /**
+     Fetches the issues of the authenticated user
+     - parameter state: Issue state. Defaults to open if not specified.
+     - parameter page: Current page for issue pagination. `1` by default.
+     - parameter perPage: Number of issues per page. `100` by default.
+     */
+        func myIssues(state: Openness = .open,
+                  page: String = "1",
+                  perPage: String = "100") async throws -> [Issue] {
+        let router = IssueRouter.readAuthenticatedIssues(configuration, page, perPage, state)
+        return try await router.load(session, dateDecodingStrategy: .formatted(Time.rfc3339DateFormatter), expectedResultType: [Issue].self)
+    }
+
+    /**
+     Fetches an issue in a repository
+     - parameter owner: The user or organization that owns the repository.
+     - parameter repository: The name of the repository.
+     - parameter number: The number of the issue.
+     */
+        func issue(owner: String, repository: String, number: Int) async throws -> Issue {
+        let router = IssueRouter.readIssue(configuration, owner, repository, number)
+        return try await router.load(session, dateDecodingStrategy: .formatted(Time.rfc3339DateFormatter), expectedResultType: Issue.self)
+    }
+
+    /**
+     Fetches all issues in a repository
+     - parameter owner: The user or organization that owns the repository.
+     - parameter repository: The name of the repository.
+     - parameter state: Issue state. Defaults to open if not specified.
+     - parameter page: Current page for issue pagination. `1` by default.
+     - parameter perPage: Number of issues per page. `100` by default.
+     */
+        func issues(owner: String,
+                repository: String,
+                state: Openness = .open,
+                page: String = "1",
+                perPage: String = "100") async throws -> [Issue] {
+        let router = IssueRouter.readIssues(configuration, owner, repository, page, perPage, state)
+        return try await router.load(session, dateDecodingStrategy: .formatted(Time.rfc3339DateFormatter), expectedResultType: [Issue].self)
+    }
+
+    /**
+     Creates an issue in a repository.
+     - parameter owner: The user or organization that owns the repository.
+     - parameter repository: The name of the repository.
+     - parameter title: The title of the issue.
+     - parameter body: The body text of the issue in GitHub-flavored Markdown format.
+     - parameter assignee: The name of the user to assign the issue to. This parameter is ignored if the user lacks push access to the repository.
+     - parameter labels: An array of label names to add to the issue. If the labels do not exist, GitHub will create them automatically. This parameter is ignored if the user lacks push access to the repository.
+     */
+        func postIssue(owner: String,
+                   repository: String,
+                   title: String,
+                   body: String? = nil,
+                   assignee: String? = nil,
+                   labels: [String] = []) async throws -> Issue {
+        let router = IssueRouter.postIssue(configuration, owner, repository, title, body, assignee, labels)
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .formatted(Time.rfc3339DateFormatter)
+        return try await router.post(session, decoder: decoder, expectedResultType: Issue.self)
+    }
+
+    /**
+     Edits an issue in a repository.
+     - parameter owner: The user or organization that owns the repository.
+     - parameter repository: The name of the repository.
+     - parameter number: The number of the issue.
+     - parameter title: The title of the issue.
+     - parameter body: The body text of the issue in GitHub-flavored Markdown format.
+     - parameter assignee: The name of the user to assign the issue to. This parameter is ignored if the user lacks push access to the repository.
+     - parameter state: Whether the issue is open or closed.
+     */
+        func patchIssue(owner: String,
+                    repository: String,
+                    number: Int,
+                    title: String? = nil,
+                    body: String? = nil,
+                    assignee: String? = nil,
+                    state: Openness? = nil) async throws -> Issue {
+        let router = IssueRouter.patchIssue(configuration, owner, repository, number, title, body, assignee, state)
+        return try await router.post(session, expectedResultType: Issue.self)
+    }
+
+    /// Posts a comment on an issue using the given body.
+    /// - Parameters:
+    ///   - owner: The user or organization that owns the repository.
+    ///   - repository: The name of the repository.
+    ///   - number: The number of the issue.
+    ///   - body: The contents of the comment.
+        func commentIssue(owner: String, repository: String, number: Int, body: String) async throws -> Comment {
+        let router = IssueRouter.commentIssue(configuration, owner, repository, number, body)
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .formatted(Time.rfc3339DateFormatter)
+        return try await router.post(session, decoder: decoder, expectedResultType: Comment.self)
+    }
+
+    /// Fetches all comments for an issue
+    /// - Parameters:
+    ///   - owner: The user or organization that owns the repository.
+    ///   - repository: The name of the repository.
+    ///   - number: The number of the issue.
+    ///   - page: Current page for comments pagination. `1` by default.
+    ///   - perPage: Number of comments per page. `100` by default.
+        func issueComments(owner: String,
+                       repository: String,
+                       number: Int,
+                       page: String = "1",
+                       perPage: String = "100") async throws -> [Comment] {
+        let router = IssueRouter.readIssueComments(configuration, owner, repository, number, page, perPage)
+        return try await router.load(session, dateDecodingStrategy: .formatted(Time.rfc3339DateFormatter), expectedResultType: [Comment].self)
+    }
+
+    /// Edits a comment on an issue using the given body.
+    /// - Parameters:
+    ///   - owner: The user or organization that owns the repository.
+    ///   - repository: The name of the repository.
+    ///   - number: The number of the comment.
+    ///   - body: The contents of the comment.
+        func patchIssueComment(owner: String, repository: String, number: Int, body: String) async throws -> Comment {
+        let router = IssueRouter.patchIssueComment(configuration, owner, repository, number, body)
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .formatted(Time.rfc3339DateFormatter)
+        return try await router.post(session, decoder: decoder, expectedResultType: Comment.self)
+    }
+}
+
+// MARK: Router
+
+enum IssueRouter: JSONPostRouter {
+    case readAuthenticatedIssues(Configuration, String, String, Openness)
+    case readIssue(Configuration, String, String, Int)
+    case readIssues(Configuration, String, String, String, String, Openness)
+    case postIssue(Configuration, String, String, String, String?, String?, [String])
+    case patchIssue(Configuration, String, String, Int, String?, String?, String?, Openness?)
+    case commentIssue(Configuration, String, String, Int, String)
+    case readIssueComments(Configuration, String, String, Int, String, String)
+    case patchIssueComment(Configuration, String, String, Int, String)
+
+    var method: HTTPMethod {
+        switch self {
+        case .postIssue, .patchIssue, .commentIssue, .patchIssueComment:
+            return .POST
+        default:
+            return .GET
+        }
+    }
+
+    var encoding: HTTPEncoding {
+        switch self {
+        case .postIssue, .patchIssue, .commentIssue, .patchIssueComment:
+            return .json
+        default:
+            return .url
+        }
+    }
+
+    var configuration: Configuration {
+        switch self {
+        case let .readAuthenticatedIssues(config, _, _, _): return config
+        case let .readIssue(config, _, _, _): return config
+        case let .readIssues(config, _, _, _, _, _): return config
+        case let .postIssue(config, _, _, _, _, _, _): return config
+        case let .patchIssue(config, _, _, _, _, _, _, _): return config
+        case let .commentIssue(config, _, _, _, _): return config
+        case let .readIssueComments(config, _, _, _, _, _): return config
+        case let .patchIssueComment(config, _, _, _, _): return config
+        }
+    }
+
+    var params: [String: Any] {
+        switch self {
+        case let .readAuthenticatedIssues(_, page, perPage, state):
+            return ["per_page": perPage, "page": page, "state": state.rawValue]
+        case .readIssue:
+            return [:]
+        case let .readIssues(_, _, _, page, perPage, state):
+            return ["per_page": perPage, "page": page, "state": state.rawValue]
+        case let .postIssue(_, _, _, title, body, assignee, labels):
+            var params: [String: Any] = ["title": title]
+            if let body = body {
+                params["body"] = body
+            }
+            if let assignee = assignee {
+                params["assignee"] = assignee
+            }
+            if !labels.isEmpty {
+                params["labels"] = labels
+            }
+            return params
+        case let .patchIssue(_, _, _, _, title, body, assignee, state):
+            var params: [String: String] = [:]
+            if let title = title {
+                params["title"] = title
+            }
+            if let body = body {
+                params["body"] = body
+            }
+            if let assignee = assignee {
+                params["assignee"] = assignee
+            }
+            if let state = state {
+                params["state"] = state.rawValue
+            }
+            return params
+        case let .commentIssue(_, _, _, _, body):
+            return ["body": body]
+        case let .readIssueComments(_, _, _, _, page, perPage):
+            return ["per_page": perPage, "page": page]
+        case let .patchIssueComment(_, _, _, _, body):
+            return ["body": body]
+        }
+    }
+
+    var path: String {
+        switch self {
+        case .readAuthenticatedIssues:
+            return "issues"
+        case let .readIssue(_, owner, repository, number):
+            return "repos/\(owner)/\(repository)/issues/\(number)"
+        case let .readIssues(_, owner, repository, _, _, _):
+            return "repos/\(owner)/\(repository)/issues"
+        case let .postIssue(_, owner, repository, _, _, _, _):
+            return "repos/\(owner)/\(repository)/issues"
+        case let .patchIssue(_, owner, repository, number, _, _, _, _):
+            return "repos/\(owner)/\(repository)/issues/\(number)"
+        case let .commentIssue(_, owner, repository, number, _):
+            return "repos/\(owner)/\(repository)/issues/\(number)/comments"
+        case let .readIssueComments(_, owner, repository, number, _, _):
+            return "repos/\(owner)/\(repository)/issues/\(number)/comments"
+        case let .patchIssueComment(_, owner, repository, number, _):
+            return "repos/\(owner)/\(repository)/issues/comments/\(number)"
+        }
+    }
+}

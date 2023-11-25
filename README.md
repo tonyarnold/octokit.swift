@@ -20,6 +20,7 @@ let package = Package(
 ## Authentication
 
 Octokit supports both, GitHub and GitHub Enterprise.
+
 Authentication is handled using Configurations.
 
 There are two types of Configurations, `TokenConfiguration` and `OAuthConfiguration`.
@@ -45,14 +46,7 @@ let config = TokenConfiguration("YOUR_PRIVATE_GITHUB_TOKEN_HERE", url: "https://
 After you got your token you can use it with `Octokit`
 
 ```swift
-Octokit(config).me() { response in
-  switch response {
-  case .success(let user):
-    print(user.login as Any)
-  case .failure(let error):
-    print(error)
-  }
-}
+let user = try await Octokit(config).me()
 ```
 
 ### OAuthConfiguration
@@ -123,26 +117,13 @@ Octokit(config).user(name: "octocat") { response in
 
 ```swift
 let username = ... // set the username
-Octokit().user(name: username) { response in
-  switch response {
-    case .success(let user):
-      // do something with the user
-    case .failure(let error):
-      // handle any errors
-  }
-}
+let user = try await Octokit().user(name: username)
 ```
 
 ### Get the authenticated user
 
 ```swift
-Octokit().me() { response in
-  switch response {
-    case .success(let user):
-      // do something with the user
-    case .failure(let error):
-      // handle any errors
-  }
+let user = try await Octokit().me()
 ```
 
 ## Repositories
@@ -151,27 +132,13 @@ Octokit().me() { response in
 
 ```swift
 let (owner, name) = ("owner", "name") // replace with actual owner and name
-Octokit().repository(owner, name) { response in
-  switch response {
-    case .success(let repository):
-      // do something with the repository
-    case .failure(let error):
-      // handle any errors
-  }
-}
+let repository = try await Octokit().repository(owner, name)
 ```
 
 ### Get repositories of authenticated user
 
 ```swift
-Octokit().repositories() { response in
-  switch response {
-    case .success(let repository):
-      // do something
-    case .failure(let error):
-      // handle any errors
-  }
-}
+let repositories = try await Octokit().repositories()
 ```
 
 ## Starred Repositories
@@ -179,28 +146,13 @@ Octokit().repositories() { response in
 ### Get starred repositories of some user
 
 ```swift
-let username = "username"
-Octokit().stars(username) { response in
-  switch response {
-    case .success(let repositories):
-      // do something with the repositories
-    case .failure(let error):
-      // handle any errors
-  }
-}
+let repositories = try await Octokit().stars("username")
 ```
 
 ### Get starred repositories of authenticated user
 
 ```swift
-Octokit().myStars() { response in
-  switch response {
-    case .success(let repositories):
-      // do something with the repositories
-    case .failure(let error):
-      // handle any errors
-  }
-}
+let repositories = try await Octokit().myStars()
 ```
 
 ## Follower and Following
@@ -208,55 +160,25 @@ Octokit().myStars() { response in
 ### Get followers of some user
 
 ```swift
-let username = "username"
-Octokit().followers(username) { response in
-  switch response {
-    case .success(let users):
-      // do something with the users
-    case .failure(let error):
-      // handle any errors
-  }
-}
+let users = try await Octokit().followers("username")
 ```
 
 ### Get followers of authenticated user
 
 ```swift
-Octokit().myFollowers() { response in
-  switch response {
-    case .success(let users):
-      // do something with the users
-    case .failure(let error):
-      // handle any errors
-  }
-}
+let users = try await Octokit().myFollowers()
 ```
 
 ### Get following of some user
 
 ```swift
-let username = "username"
-Octokit().following(username) { response in
-  switch response {
-    case .success(let users):
-      // do something with the users
-    case .failure(let error):
-      // handle any errors
-  }
-}
+let users = try await Octokit().following("username")
 ```
 
 ### Get following of authenticated user
 
 ```swift
-Octokit().myFollowing() { response in
-  switch response {
-    case .success(let users):
-      // do something with the users
-    case .failure(let error):
-      // handle any errors
-  }
-}
+let users = try await Octokit().myFollowing()
 ```
 
 ## Issues
@@ -266,130 +188,60 @@ Octokit().myFollowing() { response in
 Get all issues across all the authenticated user's visible repositories including owned repositories, member repositories, and organization repositories.
 
 ```swift
-Octokit(config).myIssues() { response in
-    switch response {
-        case .success(let issues):
-        // do something with the issues
-    case .failure:
-        // handle any errors
-    }   
-}
+let issues = try await Octokit(config).myIssues()
 ```
 
 ### Get a single issue
 
 ```swift
 let (owner, repo, number) = ("owner", "repo", 1347) // replace with actual owner, repo name, and issue number
-Octokit(config).issue(owner, repository: repo, number: number) { response in
-    switch response {
-    case .success(let issue):
-        // do something with the issue
-    case .failure:
-        // handle any errors
-    }
-}
+let issue = try await Octokit(config).issue(owner, repository: repo, number: number)
 ```
 
 ### Open a new issue
 
 ```swift
-Octokit(config).postIssue("owner", repository: "repo", title: "Found a bug", body: "I'm having a problem with this.", assignee: "octocat", labels: ["bug", "duplicate"]) { response in
-    switch response {
-    case .success(let issue):
-        // do something with the issue
-    case .failure:
-        // handle any errors
-    }
-}
+let issue = try await Octokit(config).postIssue("owner", repository: "repo", title: "Found a bug", body: "I'm having a problem with this.", assignee: "octocat", labels: ["bug", "duplicate"])
 ```
 
 ### Edit an existing issue
 
 ```swift
-Octokit(config).patchIssue("owner", repository: "repo", number: 1347, title: "Found a bug", body: "I'm having a problem with this.", assignee: "octocat", state: .Closed) { response in
-    switch response {
-    case .success(let issue):
-        // do something with the issue
-    case .failure:
-        // handle any errors
-    }
-}
+let issue = try await Octokit(config).patchIssue("owner", repository: "repo", number: 1347, title: "Found a bug", body: "I'm having a problem with this.", assignee: "octocat", state: .Closed)
 ```
 
 ### Comment an issue
 
 ```swift
-Octokit().commentIssue(owner: "octocat", repository: "Hello-World", number: 1, body: "Testing a comment") { response in
-    switch response {
-    case .success(let comment):
-        // do something with the comment
-    case .failure:
-        // handle any errors
-    }
-}
+let comment = try await Octokit().commentIssue(owner: "octocat", repository: "Hello-World", number: 1, body: "Testing a comment")
 ```
 
 ### Edit an existing comment
 
 ```swift
-Octokit().patchIssueComment(owner: "octocat", repository: "Hello-World", number: 1, body: "Testing a comment") { response in
-    switch response {
-    case .success(let comment):
-        // do something with the comment
-    case .failure:
-        // handle any errors
-    }
-}
+let comment = try await Octokit().patchIssueComment(owner: "octocat", repository: "Hello-World", number: 1, body: "Testing a comment")
 ```
 
 ## Pull requests
 
 ### Get a single pull request
 ```swift
-Octokit().pullRequest(owner: "octocat", repository: "Hello-World", number: 1) { response in
-    switch response {
-        case .success(let pullRequests):
-            // do something with a pull request
-        case .failure:
-            // handle any errors
-     }
-}
+let pullRequests = try await Octokit().pullRequest(owner: "octocat", repository: "Hello-World", number: 1)
 ```
 
 ### List pull requests
 ```swift
-Octokit().pullRequests(owner: "octocat", repository: "Hello-World", base: "develop", state: Openness.Open) { response in
-    switch response {
-        case .success(let pullRequests):
-        // do something with a pull request list
-        case .failure:
-        // handle any errors
-    }
-}
+let pullRequests = try await Octokit().pullRequests(owner: "octocat", repository: "Hello-World", base: "develop", state: .Open)
 ```
 
 ### Update an exisiting Pull Request
 ```swift
-Octokit().patchPullRequest(session, owner: "octocat", repository: "Hello-World", number: 1, title: "Updated title", body: "The updated body", state: .open, base: "base-branch", mantainerCanModify: true) { response in
-    switch response {
-        case .success(let pullrequest):
-        // do something with the pullrequest
-        case .failure:
-        // handle any errors
-    }
-}
+let pullRequest = try await Octokit().patchPullRequest(session, owner: "octocat", repository: "Hello-World", number: 1, title: "Updated title", body: "The updated body", state: .open, base: "base-branch", mantainerCanModify: true)
 ```
 
 ## Releases
 
 ### Create a new release
 ```swift
-Octokit().postRelease(owner: "octocat", repository: "Hello-World", tagName: "v1.0.0", targetCommitish: "master", name: "v1.0.0 Release", body: "The changelog of this release", prerelease: false, draft: false) { response in
-	switch response {
-        case .success(let release):
-        // do something with the release
-        case .failure:
-        // handle any errors
-    }
-}
+let release = try await Octokit().postRelease(owner: "octocat", repository: "Hello-World", tagName: "v1.0.0", targetCommitish: "master", name: "v1.0.0 Release", body: "The changelog of this release", prerelease: false, draft: false)
 ```

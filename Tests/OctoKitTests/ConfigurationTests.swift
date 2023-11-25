@@ -45,16 +45,14 @@ class ConfigurationTests: XCTestCase {
         XCTAssertEqual(config.accessTokenFromResponse(response), expectation)
     }
 
-    func testHandleOpenURL() {
+    func testHandleOpenURL() async throws {
         let response = "access_token=017ec60f4a182&scope=read%3Aorg%2Crepo&token_type=bearer"
         let session = OctoKitURLTestSession(expectedURL: "https://github.com/login/oauth/access_token", expectedHTTPMethod: "POST", response: response, statusCode: 200)
         let config = OAuthConfiguration(token: "12345", secret: "6789", scopes: ["repo", "read:org"], session: session)
         let url = URL(string: "urlscheme://authorize?code=dhfjgh23493&state=")!
-        var token: String?
-        config.handleOpenURL(url: url) { accessToken in
-            token = accessToken.accessToken
-        }
-        XCTAssertEqual(token, "017ec60f4a182".data(using: .utf8)?.base64EncodedString())
+        let token = try await config.handleOpenURL(url: url)
+        XCTAssertNotNil(token)
+        XCTAssertEqual(token?.accessToken, "017ec60f4a182".data(using: .utf8)?.base64EncodedString())
         XCTAssertTrue(session.wasCalled)
     }
 }

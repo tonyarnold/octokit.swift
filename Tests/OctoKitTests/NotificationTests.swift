@@ -4,7 +4,7 @@ import XCTest
 class NotificationTests: XCTestCase {
     // MARK: Actual Request tests
 
-    func testGetMyNotifications() {
+    func testGetMyNotifications() async throws {
         let config = TokenConfiguration("user:12345")
         let headers = Helper.makeAuthHeader(username: "user", password: "12345")
 
@@ -13,20 +13,13 @@ class NotificationTests: XCTestCase {
                                             expectedHTTPHeaders: headers,
                                             jsonFile: "notification_threads",
                                             statusCode: 200)
-        let task = Octokit(config, session: session).myNotifications(all: false, participating: false, page: "1", perPage: "100") { response in
-            switch response {
-            case let .success(notifications):
-                XCTAssertEqual(notifications.count, 1)
-                XCTAssertEqual(notifications.first?.id, "1")
-            case let .failure(error):
-                XCTAssertNil(error)
-            }
-        }
-        XCTAssertNotNil(task)
+        let notifications = try await Octokit(config, session: session).myNotifications(all: false, participating: false, page: "1", perPage: "100")
+        XCTAssertEqual(notifications.count, 1)
+        XCTAssertEqual(notifications.first?.id, "1")
         XCTAssertTrue(session.wasCalled)
     }
 
-    func testMarkNotifcationsRead() {
+    func testMarkNotifcationsRead() async throws {
         let config = TokenConfiguration("user:12345")
         let headers = Helper.makeAuthHeader(username: "user", password: "12345")
         let session = OctoKitURLTestSession(expectedURL: "https://api.github.com/notifications?last_read_at=last_read_at&read=false",
@@ -34,14 +27,11 @@ class NotificationTests: XCTestCase {
                                             expectedHTTPHeaders: headers,
                                             response: "",
                                             statusCode: 200)
-        let task = Octokit(config, session: session).markNotificationsRead { response in
-            XCTAssertNil(response)
-        }
-        XCTAssertNotNil(task)
+        try await Octokit(config, session: session).markNotificationsRead()
         XCTAssertTrue(session.wasCalled)
     }
 
-    func testGetNotificationThread() {
+    func testGetNotificationThread() async throws {
         let config = TokenConfiguration("user:12345")
         let headers = Helper.makeAuthHeader(username: "user", password: "12345")
         let session = OctoKitURLTestSession(expectedURL: "https://api.github.com/notifications/threads/1",
@@ -49,19 +39,12 @@ class NotificationTests: XCTestCase {
                                             expectedHTTPHeaders: headers,
                                             jsonFile: "notification_thread",
                                             statusCode: 200)
-        let task = Octokit(config, session: session).getNotificationThread(threadId: "1") { response in
-            switch response {
-            case let .success(notification):
-                XCTAssertEqual(notification.id, "1")
-            case let .failure(error):
-                XCTAssertNil(error)
-            }
-        }
-        XCTAssertNotNil(task)
+        let notification = try await Octokit(config, session: session).getNotificationThread(threadId: "1")
+        XCTAssertEqual(notification.id, "1")
         XCTAssertTrue(session.wasCalled)
     }
 
-    func testGetThreadSubscription() {
+    func testGetThreadSubscription() async throws {
         let config = TokenConfiguration("user:12345")
         let headers = Helper.makeAuthHeader(username: "user", password: "12345")
         let session = OctoKitURLTestSession(expectedURL: "https://api.github.com/notifications/threads/1/subscription",
@@ -69,19 +52,12 @@ class NotificationTests: XCTestCase {
                                             expectedHTTPHeaders: headers,
                                             jsonFile: "notification_thread_subscription",
                                             statusCode: 200)
-        let task = Octokit(config, session: session).getThreadSubscription(threadId: "1") { response in
-            switch response {
-            case let .success(notification):
-                XCTAssertEqual(notification.id, 1)
-            case let .failure(error):
-                XCTAssertNil(error)
-            }
-        }
-        XCTAssertNotNil(task)
+        let notification = try await Octokit(config, session: session).getThreadSubscription(threadId: "1")
+        XCTAssertEqual(notification.id, 1)
         XCTAssertTrue(session.wasCalled)
     }
 
-    func testSetThreadSubscription() {
+    func testSetThreadSubscription() async throws {
         let config = TokenConfiguration("user:12345")
         let headers = Helper.makeAuthHeader(username: "user", password: "12345")
         let session = OctoKitURLTestSession(expectedURL: "https://api.github.com/notifications/threads/1/subscription",
@@ -89,19 +65,12 @@ class NotificationTests: XCTestCase {
                                             expectedHTTPHeaders: headers,
                                             jsonFile: "notification_thread_subscription",
                                             statusCode: 200)
-        let task = Octokit(config, session: session).setThreadSubscription(threadId: "1") { response in
-            switch response {
-            case let .success(notification):
-                XCTAssertEqual(notification.id, 1)
-            case let .failure(error):
-                XCTAssertNil(error)
-            }
-        }
-        XCTAssertNotNil(task)
+        let notification = try await Octokit(config, session: session).setThreadSubscription(threadId: "1")
+        XCTAssertEqual(notification.id, 1)
         XCTAssertTrue(session.wasCalled)
     }
 
-    func testDeleteThreadSubscription() {
+    func testDeleteThreadSubscription() async throws {
         let config = TokenConfiguration("user:12345")
         let headers = Helper.makeAuthHeader(username: "user", password: "12345")
         let session = OctoKitURLTestSession(expectedURL: "https://api.github.com/notifications/threads/1/subscription",
@@ -109,14 +78,11 @@ class NotificationTests: XCTestCase {
                                             expectedHTTPHeaders: headers,
                                             response: "",
                                             statusCode: 200)
-        let task = Octokit(config, session: session).deleteThreadSubscription(threadId: "1") { response in
-            XCTAssertNil(response)
-        }
-        XCTAssertNotNil(task)
+        try await Octokit(config, session: session).deleteThreadSubscription(threadId: "1")
         XCTAssertTrue(session.wasCalled)
     }
 
-    func testListRepositoryNotifications() {
+    func testListRepositoryNotifications() async throws {
         let config = TokenConfiguration("user:12345")
         let headers = Helper.makeAuthHeader(username: "user", password: "12345")
         let session = OctoKitURLTestSession(expectedURL: "https://api.github.com/repos/octocat/hello-world/notifications?all=false&page=1&participating=false&perPage=100",
@@ -124,20 +90,13 @@ class NotificationTests: XCTestCase {
                                             expectedHTTPHeaders: headers,
                                             jsonFile: "notification_threads",
                                             statusCode: 200)
-        let task = Octokit(config, session: session).listRepositoryNotifications(owner: "octocat", repository: "hello-world") { response in
-            switch response {
-            case let .success(notifications):
-                XCTAssertEqual(notifications.count, 1)
-                XCTAssertEqual(notifications.first?.id, "1")
-            case let .failure(error):
-                XCTAssertNil(error)
-            }
-        }
-        XCTAssertNotNil(task)
+        let notifications = try await Octokit(config, session: session).listRepositoryNotifications(owner: "octocat", repository: "hello-world")
+        XCTAssertEqual(notifications.count, 1)
+        XCTAssertEqual(notifications.first?.id, "1")
         XCTAssertTrue(session.wasCalled)
     }
 
-    func testMarkRepositoryNofificationsRead() {
+    func testMarkRepositoryNofificationsRead() async throws {
         let config = TokenConfiguration("user:12345")
         let headers = Helper.makeAuthHeader(username: "user", password: "12345")
         let session = OctoKitURLTestSession(expectedURL: "https://api.github.com/repos/octocat/hello-world/notifications",
@@ -145,10 +104,7 @@ class NotificationTests: XCTestCase {
                                             expectedHTTPHeaders: headers,
                                             response: "",
                                             statusCode: 200)
-        let task = Octokit(config, session: session).markRepositoryNotificationsRead(owner: "octocat", repository: "hello-world") { response in
-            XCTAssertNil(response)
-        }
-        XCTAssertNotNil(task)
+        try await Octokit(config, session: session).markRepositoryNotificationsRead(owner: "octocat", repository: "hello-world")
         XCTAssertTrue(session.wasCalled)
     }
 }

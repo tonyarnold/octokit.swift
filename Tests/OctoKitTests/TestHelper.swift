@@ -31,17 +31,6 @@ class Helper {
     }
 
     private class func jsonFilePath(for resourceName: String) -> String {
-        let baseURL = URL(fileURLWithPath: #file)
-            .deletingLastPathComponent()
-        let bundlePath = baseURL.appendingPathComponent("\(resourceName).json").path
-
-        if FileManager.default.fileExists(atPath: bundlePath) {
-            return bundlePath
-        } else {
-            return baseURL
-                .appendingPathComponent("Fixtures")
-                .appendingPathComponent("\(resourceName).json")
-                .path
-        }
+        return Bundle.module.path(forResource: resourceName, ofType: "json", inDirectory: "Fixtures")!
     }
 }
