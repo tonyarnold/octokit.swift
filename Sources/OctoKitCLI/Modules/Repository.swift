@@ -10,7 +10,6 @@ import Foundation
 import OctoKit
 import Rainbow
 
-@available(macOS 12.0, *)
 struct Repository: AsyncParsableCommand {
     public static let configuration = CommandConfiguration(abstract: "Operate on Repositories",
                                                            subcommands: [
@@ -21,7 +20,6 @@ struct Repository: AsyncParsableCommand {
     init() {}
 }
 
-@available(macOS 12.0, *)
 extension Repository {
     struct Get: AsyncParsableCommand {
         @Argument(help: "The owner of the repository")

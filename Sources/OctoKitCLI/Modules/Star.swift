@@ -10,7 +10,6 @@ import Foundation
 import OctoKit
 import Rainbow
 
-@available(macOS 12.0, *)
 struct Star: AsyncParsableCommand {
     public static let configuration = CommandConfiguration(abstract: "Operate on Stars",
                                                            subcommands: [
@@ -20,7 +19,6 @@ struct Star: AsyncParsableCommand {
     init() {}
 }
 
-@available(macOS 12.0, *)
 extension Star {
     struct GetList: AsyncParsableCommand {
         @Argument(help: "The user to fetch stars for")

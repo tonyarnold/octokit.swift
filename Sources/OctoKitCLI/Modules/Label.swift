@@ -10,7 +10,6 @@ import Foundation
 import OctoKit
 import Rainbow
 
-@available(macOS 12.0, *)
 struct Label: AsyncParsableCommand {
     public static let configuration = CommandConfiguration(abstract: "Operate on Labels",
                                                            subcommands: [
@@ -21,7 +20,6 @@ struct Label: AsyncParsableCommand {
     init() {}
 }
 
-@available(macOS 12.0, *)
 extension Label {
     struct Get: AsyncParsableCommand {
         @Argument(help: "The owner of the repository")

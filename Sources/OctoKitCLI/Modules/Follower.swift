@@ -10,7 +10,6 @@ import Foundation
 import OctoKit
 import Rainbow
 
-@available(macOS 12.0, *)
 struct Follower: AsyncParsableCommand {
     public static let configuration = CommandConfiguration(abstract: "Operate on Followes",
                                                            subcommands: [
@@ -20,7 +19,6 @@ struct Follower: AsyncParsableCommand {
     init() {}
 }
 
-@available(macOS 12.0, *)
 extension Follower {
     struct GetList: AsyncParsableCommand {
         @Argument(help: "The name of the user")

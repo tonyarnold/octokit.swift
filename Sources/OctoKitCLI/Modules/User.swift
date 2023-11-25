@@ -10,7 +10,6 @@ import Foundation
 import OctoKit
 import Rainbow
 
-@available(macOS 12.0, *)
 struct User: AsyncParsableCommand {
     public static let configuration = CommandConfiguration(abstract: "Operate on Users",
                                                            subcommands: [
@@ -20,7 +19,6 @@ struct User: AsyncParsableCommand {
     init() {}
 }
 
-@available(macOS 12.0, *)
 extension User {
     struct Get: AsyncParsableCommand {
         @Argument(help: "The name of the user")

@@ -10,7 +10,6 @@ import Foundation
 import OctoKit
 import Rainbow
 
-@available(macOS 12.0, *)
 struct Gist: AsyncParsableCommand {
     public static let configuration = CommandConfiguration(abstract: "Operate on Gists",
                                                            subcommands: [
@@ -21,7 +20,6 @@ struct Gist: AsyncParsableCommand {
     init() {}
 }
 
-@available(macOS 12.0, *)
 extension Gist {
     struct Get: AsyncParsableCommand {
         @Argument(help: "The id of the gist")
@@ -45,7 +43,6 @@ extension Gist {
     }
 }
 
-@available(macOS 12.0, *)
 extension Gist {
     struct GetList: AsyncParsableCommand {
         @Argument(help: "The owner of the gists")

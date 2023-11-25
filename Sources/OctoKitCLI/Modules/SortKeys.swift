@@ -9,7 +9,6 @@ import ArgumentParser
 import Foundation
 import Rainbow
 
-@available(macOS 12.0, *)
 struct SortedJSONKeys: AsyncParsableCommand {
     public static let configuration = CommandConfiguration(abstract: "Sorting Keys in JSON")
 
