@@ -1,7 +1,5 @@
 # Octokit.swift
 
-[![CocoaPods](https://img.shields.io/cocoapods/v/OctoKit.swift.svg)](https://cocoapods.org/pods/OctoKit.swift)
-
 ## Installation
 
 - **Using [Swift Package Manager](https://swift.org/package-manager)**:
@@ -11,10 +9,10 @@ import PackageDescription
 
 let package = Package(
   name: "MyAwesomeApp",
-    dependencies: [
-      .package(url: "https://github.com/nerdishbynature/octokit.swift", from: "0.11.0"),
-    ]
-  )
+  dependencies: [
+    .package(url: "https://github.com/nerdishbynature/octokit.swift", from: "0.11.0"),
+  ]
+)
 ```
 
 ## Authentication
@@ -51,10 +49,9 @@ let user = try await Octokit(config).me()
 
 ### OAuthConfiguration
 
-`OAuthConfiguration` is meant to be used, if you don't have an access token already and the
-user has to login to your application. This also handles the OAuth flow.
+Use `OAuthConfiguration` if the user does not already have a GitHub access token. This will guide the user through handles the OAuth flow.
 
-You can authenticate an user for `github.com` as follows:
+You can authenticate a user for `github.com` as follows:
 
 ```swift
 let config = OAuthConfiguration(token: "<Your Client ID>", secret: "<Your Client secret>", scopes: ["repo", "read:org"])
@@ -67,7 +64,7 @@ or for GitHub Enterprise
 let config = OAuthConfiguration("https://github.example.com/api/v3/", webURL: "https://github.example.com/", token: "<Your Client ID>", secret: "<Your Client secret>", scopes: ["repo", "read:org"])
 ```
 
-After you got your config you can authenticate the user:
+After you have a valid configuration, you will be able to authenticate the user:
 
 ```swift
 // AppDelegate.swift
@@ -75,40 +72,27 @@ After you got your config you can authenticate the user:
 config.authenticate()
 
 func application(application: UIApplication, openURL url: NSURL, sourceApplication: String?, annotation: AnyObject?) -> Bool {
-  config.handleOpenURL(url) { config in
-    self.loadCurrentUser(config) // purely optional of course
+  Task {
+    try await config.handleOpenURL(url)
+    try await loadCurrentUser(config: config) // purely optional of course
   }
   return false
 }
 
-func loadCurrentUser(config: TokenConfiguration) {
-  Octokit(config).me() { response in
-    switch response {
-    case .success(let user):
-      print(user.login)
-    case .failure(let error):
-      print(error)
-    }
-  }
+func loadCurrentUser(config: TokenConfiguration) async throws {
+  let user = try await Octokit(config).me()
+  print(user.login)
 }
 ```
 
-Please note that you will be given a `TokenConfiguration` back from the OAuth flow.
-You have to store the `accessToken` yourself. If you want to make further requests it is not
-necessary to do the OAuth Flow again. You can just use a `TokenConfiguration`.
+Please note that the OAuth flow will return a instance of `TokenConfiguration`.
+You need to store the `accessToken` yourself. If you want to make further requests it is not necessary to go through the OAuth Flow again. You can just use the `TokenConfiguration` that you already have.
 
 ```swift
 let token = // get your token from your keychain, user defaults (not recommended) etc.
 let config = TokenConfiguration(token)
-Octokit(config).user(name: "octocat") { response in
-  switch response {
-  case .success(let user):
-  	print("User login: \(user.login!)")
-  case .failure(let error):
-  	print("Error: \(error)")
-  }
-}
-
+let user = try await Octokit(config).user(name: "octocat")
+print("User login: \(user.login!)")
 ```
 
 ## Users
