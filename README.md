@@ -2,7 +2,7 @@
 
 ## Installation
 
-- **Using [Swift Package Manager](https://swift.org/package-manager)**:
+Using [Swift Package Manager](https://swift.org/package-manager):
 
 ```swift
 import PackageDescription
@@ -10,18 +10,18 @@ import PackageDescription
 let package = Package(
   name: "MyAwesomeApp",
   dependencies: [
-    .package(url: "https://github.com/nerdishbynature/octokit.swift", from: "0.11.0"),
+    .package(url: "https://github.com/nerdishbynature/octokit.swift", from: "0.11.0")
   ]
 )
 ```
 
 ## Authentication
 
-Octokit supports both, GitHub and GitHub Enterprise.
+Octokit supports GitHub, and GitHub Enterprise.
 
-Authentication is handled using Configurations.
+Authentication is handled using a `Configuration`.
 
-There are two types of Configurations, `TokenConfiguration` and `OAuthConfiguration`.
+There are two types of `Configuration`: `TokenConfiguration` and `OAuthConfiguration`.
 
 ### TokenConfiguration
 
@@ -54,14 +54,24 @@ Use `OAuthConfiguration` if the user does not already have a GitHub access token
 You can authenticate a user for `github.com` as follows:
 
 ```swift
-let config = OAuthConfiguration(token: "<Your Client ID>", secret: "<Your Client secret>", scopes: ["repo", "read:org"])
+let config = OAuthConfiguration(
+  token: "<Your Client ID>", 
+  secret: "<Your Client secret>", 
+  scopes: ["repo", "read:org"]
+)
 let url = config.authenticate()
 ```
 
 or for GitHub Enterprise
 
 ```swift
-let config = OAuthConfiguration("https://github.example.com/api/v3/", webURL: "https://github.example.com/", token: "<Your Client ID>", secret: "<Your Client secret>", scopes: ["repo", "read:org"])
+let config = OAuthConfiguration(
+  "https://github.example.com/api/v3/", 
+  webURL: "https://github.example.com/", 
+  token: "<Your Client ID>", 
+  secret: "<Your Client secret>", 
+  scopes: ["repo", "read:org"]
+)
 ```
 
 After you have a valid configuration, you will be able to authenticate the user:
