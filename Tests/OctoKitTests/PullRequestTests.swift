@@ -3,10 +3,11 @@ import XCTest
 
 class PullRequestTests: XCTestCase {
     func testGetPullRequest() async throws {
-        let session = OctoKitURLTestSession(expectedURL: "https://api.github.com/repos/octocat/Hello-World/pulls/1",
-                                            expectedHTTPMethod: "GET",
-                                            jsonFile: "pull_request",
-                                            statusCode: 200)
+        let session = try URLSession.mockedSession(
+            url: "https://api.github.com/repos/octocat/Hello-World/pulls/1",
+            method: "GET",
+            fileName: "pull_request"
+        )
 
         let pullRequest = try await Octokit(session: session).pullRequest(owner: "octocat", repository: "Hello-World", number: 1)
         XCTAssertEqual(pullRequest.id, 1)
@@ -28,17 +29,17 @@ class PullRequestTests: XCTestCase {
         XCTAssertEqual(pullRequest.head?.repo?.name, "Hello-World")
         XCTAssertEqual(pullRequest.requestedReviewers?[0].login, "octocat")
         XCTAssertEqual(pullRequest.draft, false)
-        XCTAssertTrue(session.wasCalled)
     }
 
     func testGetPullRequests() async throws {
         // Test filtering with on the base branch
-        let session = OctoKitURLTestSession(expectedURL: "https://api.github.com/repos/octocat/Hello-World/pulls?base=develop&direction=desc&sort=created&state=open",
-                                            expectedHTTPMethod: "GET",
-                                            jsonFile: "pull_requests",
-                                            statusCode: 200)
+        let session = try URLSession.mockedSession(
+            url: "https://api.github.com/repos/octocat/Hello-World/pulls?base=develop&direction=desc&sort=created&state=open",
+            method: "GET",
+            fileName: "pull_requests"
+        )
 
-        let pullRequests = try await Octokit(session: session).pullRequests(owner: "octocat", repository: "Hello-World", base: "develop", state: Openness.open)
+        let pullRequests = try await Octokit(session: session).pullRequests(owner: "octocat", repository: "Hello-World", base: "develop", state: .open)
         XCTAssertEqual(pullRequests.count, 1)
         XCTAssertEqual(pullRequests.first?.title, "new-feature")
         XCTAssertEqual(pullRequests.first?.body, "Please pull these awesome changes")
@@ -58,17 +59,17 @@ class PullRequestTests: XCTestCase {
         XCTAssertEqual(pullRequests.first?.head?.repo?.name, "Hello-World")
         XCTAssertEqual(pullRequests.first?.requestedReviewers?[0].login, "octocat")
         XCTAssertEqual(pullRequests.first?.draft, false)
-        XCTAssertTrue(session.wasCalled)
     }
 
     func testGetPullRequestsWithHead() async throws {
         // Test filtering with on the head branch
-        let session = OctoKitURLTestSession(expectedURL: "https://api.github.com/repos/octocat/Hello-World/pulls?direction=desc&head=octocat%3Anew-topic&sort=created&state=open",
-                                            expectedHTTPMethod: "GET",
-                                            jsonFile: "pull_requests",
-                                            statusCode: 200)
+        let session = try URLSession.mockedSession(
+            url: "https://api.github.com/repos/octocat/Hello-World/pulls?direction=desc&head=octocat%3Anew-topic&sort=created&state=open",
+            method: "GET",
+            fileName: "pull_requests"
+        )
 
-        let pullRequests = try await Octokit(session: session).pullRequests(owner: "octocat", repository: "Hello-World", head: "octocat:new-topic", state: Openness.open)
+        let pullRequests = try await Octokit(session: session).pullRequests(owner: "octocat", repository: "Hello-World", head: "octocat:new-topic", state: .open)
         XCTAssertEqual(pullRequests.count, 1)
         XCTAssertEqual(pullRequests.first?.title, "new-feature")
         XCTAssertEqual(pullRequests.first?.body, "Please pull these awesome changes")
@@ -88,14 +89,14 @@ class PullRequestTests: XCTestCase {
         XCTAssertEqual(pullRequests.first?.head?.repo?.name, "Hello-World")
         XCTAssertEqual(pullRequests.first?.requestedReviewers?[0].login, "octocat")
         XCTAssertEqual(pullRequests.first?.draft, false)
-        XCTAssertTrue(session.wasCalled)
     }
 
     func testUpdatePullRequest() async throws {
-        let session = OctoKitURLTestSession(expectedURL: "https://api.github.com/repos/octocat/Hello-World/pulls/1",
-                                            expectedHTTPMethod: "PATCH",
-                                            jsonFile: "pull_request",
-                                            statusCode: 200)
+        let session = try URLSession.mockedSession(
+            url: "https://api.github.com/repos/octocat/Hello-World/pulls/1",
+            method: "PATCH",
+            fileName: "pull_request"
+        )
 
         let pullrequest = try await Octokit(session: session)
             .patchPullRequest(owner: "octocat", repository: "Hello-World", number: 1, title: "new-title", body: "new-body", state: .open, base: "base-branch", mantainerCanModify: true)
@@ -119,24 +120,26 @@ class PullRequestTests: XCTestCase {
         XCTAssertEqual(pullrequest.head?.repo?.name, "Hello-World")
         XCTAssertEqual(pullrequest.requestedReviewers?[0].login, "octocat")
         XCTAssertEqual(pullrequest.draft, false)
-        XCTAssertTrue(session.wasCalled)
     }
 
     func testCreatePullRequest() async throws {
-        let session = OctoKitURLTestSession(expectedURL: "https://api.github.com/repos/octocat/Hello-World/pulls",
-                                            expectedHTTPMethod: "POST",
-                                            jsonFile: "created_pull_request",
-                                            statusCode: 200)
+        let session = try URLSession.mockedSession(
+            url: "https://api.github.com/repos/octocat/Hello-World/pulls",
+            method: "POST",
+            fileName: "created_pull_request"
+        )
 
         let pullRequest = try await Octokit(session: session)
-            .createPullRequest(owner: "octocat",
-                               repo: "Hello-World",
-                               title: "Amazing new feature",
-                               head: "octocat:new-feature",
-                               base: "master",
-                               body: "Please pull these awesome changes in!",
-                               maintainerCanModify: true,
-                               draft: false)
+            .createPullRequest(
+                owner: "octocat",
+                repository: "Hello-World",
+                title: "Amazing new feature",
+                head: "octocat:new-feature",
+                base: "master",
+                body: "Please pull these awesome changes in!",
+                maintainerCanModify: true,
+                draft: false
+            )
 
         XCTAssertEqual(pullRequest.id, 1)
         XCTAssertEqual(pullRequest.title, "Amazing new feature")
@@ -157,19 +160,21 @@ class PullRequestTests: XCTestCase {
         XCTAssertEqual(pullRequest.head?.repo?.name, "Hello-World")
         XCTAssertEqual(pullRequest.requestedReviewers?[0].login, "other_user")
         XCTAssertEqual(pullRequest.draft, false)
-        XCTAssertTrue(session.wasCalled)
     }
 
     func testListPullRequestsFiles() async throws {
-        let session = OctoKitURLTestSession(expectedURL: "https://api.github.com/repos/octocat/Hello-World/pulls/1347/files",
-                                            expectedHTTPMethod: "GET",
-                                            jsonFile: "pull_requests_files",
-                                            statusCode: 200)
+        let session = try URLSession.mockedSession(
+            url: "https://api.github.com/repos/octocat/Hello-World/pulls/1347/files",
+            method: "GET",
+            fileName: "pull_requests_files"
+        )
 
         let files = try await Octokit(session: session)
-            .listPullRequestsFiles(owner: "octocat",
-                                   repository: "Hello-World",
-                                   number: 1347)
+            .listPullRequestsFiles(
+                owner: "octocat",
+                repository: "Hello-World",
+                number: 1347
+            )
         XCTAssertEqual(files.count, 1)
         let file = files.first
         XCTAssertNotNil(file)
@@ -179,11 +184,9 @@ class PullRequestTests: XCTestCase {
         XCTAssertEqual(file?.additions, 103)
         XCTAssertEqual(file?.deletions, 21)
         XCTAssertEqual(file?.changes, 124)
-        XCTAssertEqual(file?.blobUrl, "https://github.com/octocat/Hello-World/blob/6dcb09b5b57875f334f61aebed695e2e4193db5e/file1.txt")
-        XCTAssertEqual(file?.rawUrl, "https://github.com/octocat/Hello-World/raw/6dcb09b5b57875f334f61aebed695e2e4193db5e/file1.txt")
-        XCTAssertEqual(file?.contentsUrl, "https://api.github.com/repos/octocat/Hello-World/contents/file1.txt?ref=6dcb09b5b57875f334f61aebed695e2e4193db5e")
+        XCTAssertEqual(file?.blobURL, "https://github.com/octocat/Hello-World/blob/6dcb09b5b57875f334f61aebed695e2e4193db5e/file1.txt")
+        XCTAssertEqual(file?.rawURL, "https://github.com/octocat/Hello-World/raw/6dcb09b5b57875f334f61aebed695e2e4193db5e/file1.txt")
+        XCTAssertEqual(file?.contentsURL, "https://api.github.com/repos/octocat/Hello-World/contents/file1.txt?ref=6dcb09b5b57875f334f61aebed695e2e4193db5e")
         XCTAssertEqual(file?.patch, "@@ -132,7 +132,7 @@ module Test @@ -1000,7 +1000,7 @@ module Test")
-
-        XCTAssertTrue(session.wasCalled)
     }
 }

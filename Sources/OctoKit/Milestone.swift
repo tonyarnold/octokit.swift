@@ -1,12 +1,14 @@
 import Foundation
 
 open class Milestone: Codable {
+    // MARK: Open
+
     open var url: URL?
     open var htmlURL: URL?
     open var labelsURL: URL?
     open private(set) var id: Int
     open var number: Int?
-    open var state: Openness?
+    open var state: State?
     open var title: String?
     open var milestoneDescription: String?
     open var creator: User?
@@ -17,37 +19,15 @@ open class Milestone: Codable {
     open var closedAt: Date?
     open var dueOn: Date?
 
-    public init(url: URL? = nil,
-                htmlURL: URL? = nil,
-                labelsURL: URL? = nil,
-                id: Int = -1,
-                number: Int? = nil,
-                state: Openness? = nil,
-                title: String? = nil,
-                milestoneDescription: String? = nil,
-                creator: User? = nil,
-                openIssues: Int? = nil,
-                closedIssues: Int? = nil,
-                createdAt: Date? = nil,
-                updatedAt: Date? = nil,
-                closedAt: Date? = nil,
-                dueOn: Date? = nil) {
-        self.url = url
-        self.htmlURL = htmlURL
-        self.labelsURL = labelsURL
-        self.id = id
-        self.number = number
-        self.state = state
-        self.title = title
-        self.milestoneDescription = milestoneDescription
-        self.creator = creator
-        self.openIssues = openIssues
-        self.closedIssues = closedIssues
-        self.createdAt = createdAt
-        self.updatedAt = updatedAt
-        self.closedAt = closedAt
-        self.dueOn = dueOn
+    // MARK: Public
+
+    public enum State: String, Codable {
+        case open
+        case closed
+        case all
     }
+
+    // MARK: Internal
 
     enum CodingKeys: String, CodingKey {
         case id

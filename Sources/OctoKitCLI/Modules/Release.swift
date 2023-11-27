@@ -1,23 +1,16 @@
-//
-//  File.swift
-//
-//
-//  Created by Piet Brauer-Kallenberg on 11.12.22.
-//
-
 import ArgumentParser
 import Foundation
 import OctoKit
 import Rainbow
 
 struct Release: AsyncParsableCommand {
-    public static let configuration = CommandConfiguration(abstract: "Operate on Releases",
-                                                           subcommands: [
-                                                               //            Get.self,
-                                                               GetList.self
-                                                           ])
-
-    init() {}
+    public static let configuration = CommandConfiguration(
+        abstract: "Operate on Releases",
+        subcommands: [
+//          Get.self,
+            GetList.self
+        ]
+    )
 }
 
 extension Release {
@@ -31,13 +24,8 @@ extension Release {
 //        @Argument(help: "The tag of the release")
 //        var tag: String
 //
-//        @Argument(help: "The path to put the file in")
-//        var filePath: String?
-//
 //        @Flag(help: "Verbose output flag")
 //        var verbose: Bool = false
-//
-//        init() {}
 //
 //        mutating func run() async throws {
 //            let octokit = Octokit()
@@ -55,20 +43,18 @@ extension Release {
         @Argument(help: "The name of the repository")
         var repository: String
 
-        @Argument(help: "The path to put the file in")
-        var filePath: String?
-
         @Flag(help: "Verbose output flag")
-        var verbose: Bool = false
-
-        init() {}
+        var verbose = false
 
         mutating func run() async throws {
-            let session = JSONInterceptingURLSession()
+            let delegate = URLSessionLoggingDelegate(isVerbose: verbose)
+            let session = URLSession(configuration: .default, delegate: delegate, delegateQueue: nil)
+
             let octokit = Octokit(session: session)
-            _ = try await octokit.listReleases(owner: owner, repository: repository)
-            session.verbosePrint(verbose: verbose)
-            try session.printResponseToFileOrConsole(filePath: filePath)
+            let releases = try await octokit.listReleases(owner: owner, repository: repository)
+            if let string = try prettyPrinted(releases) {
+                print(string.blue)
+            }
         }
     }
 }

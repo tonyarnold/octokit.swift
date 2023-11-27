@@ -21,7 +21,9 @@ Octokit supports GitHub, and GitHub Enterprise.
 
 Authentication is handled using a `Configuration`.
 
-There are two types of `Configuration`: `TokenConfiguration` and `OAuthConfiguration`.
+There are two types of `Configuration`: 
+- `TokenConfiguration`
+- `OAuthConfiguration`
 
 ### TokenConfiguration
 

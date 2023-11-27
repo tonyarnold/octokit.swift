@@ -1,23 +1,16 @@
-//
-//  File.swift
-//
-//
-//  Created by Piet Brauer-Kallenberg on 11.12.22.
-//
-
 import ArgumentParser
 import Foundation
 import OctoKit
 import Rainbow
 
 struct Issue: AsyncParsableCommand {
-    public static let configuration = CommandConfiguration(abstract: "Operate on Issues",
-                                                           subcommands: [
-                                                               Get.self,
-                                                               GetList.self
-                                                           ])
-
-    init() {}
+    public static let configuration = CommandConfiguration(
+        abstract: "Operate on Issues",
+        subcommands: [
+            Get.self,
+            GetList.self
+        ]
+    )
 }
 
 extension Issue {
@@ -31,20 +24,17 @@ extension Issue {
         @Argument(help: "The number of the issue")
         var number: Int
 
-        @Argument(help: "The path to put the file in")
-        var filePath: String?
-
         @Flag(help: "Verbose output flag")
-        var verbose: Bool = false
-
-        init() {}
+        var verbose = false
 
         mutating func run() async throws {
-            let session = JSONInterceptingURLSession()
+            let delegate = URLSessionLoggingDelegate(isVerbose: verbose)
+            let session = URLSession(configuration: .default, delegate: delegate, delegateQueue: nil)
             let octokit = Octokit(session: session)
-            _ = try await octokit.issue(owner: owner, repository: repository, number: number)
-            session.verbosePrint(verbose: verbose)
-            try session.printResponseToFileOrConsole(filePath: filePath)
+            let issue = try await octokit.issue(owner: owner, repository: repository, number: number)
+            if let string = try prettyPrinted(issue) {
+                print(string.blue)
+            }
         }
     }
 
@@ -55,20 +45,17 @@ extension Issue {
         @Argument(help: "The name of the repository")
         var repository: String
 
-        @Argument(help: "The path to put the file in")
-        var filePath: String?
-
         @Flag(help: "Verbose output flag")
-        var verbose: Bool = false
-
-        init() {}
+        var verbose = false
 
         mutating func run() async throws {
-            let session = JSONInterceptingURLSession()
+            let delegate = URLSessionLoggingDelegate(isVerbose: verbose)
+            let session = URLSession(configuration: .default, delegate: delegate, delegateQueue: nil)
             let octokit = Octokit(session: session)
-            _ = try await octokit.issues(owner: owner, repository: repository)
-            session.verbosePrint(verbose: verbose)
-            try session.printResponseToFileOrConsole(filePath: filePath)
+            let issues = try await octokit.issues(owner: owner, repository: repository)
+            if let string = try prettyPrinted(issues) {
+                print(string.blue)
+            }
         }
     }
 }

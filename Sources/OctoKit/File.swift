@@ -1,9 +1,10 @@
-
 import Foundation
 
 public typealias Files = [String: File]
 
-open class File: Codable {
+open class File: Codable, Identifiable {
+    // MARK: Open
+
     open private(set) var id: Int = -1
     open var rawURL: URL?
     open var filename: String?
@@ -12,21 +13,7 @@ open class File: Codable {
     open var size: Int?
     open var content: String?
 
-    public init(id: Int,
-                rawURL: URL? = nil,
-                filename: String? = nil,
-                type: String? = nil,
-                language: String? = nil,
-                size: Int? = nil,
-                content: String? = nil) {
-        self.id = id
-        self.rawURL = rawURL
-        self.filename = filename
-        self.type = type
-        self.language = language
-        self.size = size
-        self.content = content
-    }
+    // MARK: Internal
 
     enum CodingKeys: String, CodingKey {
         case rawURL = "raw_url"

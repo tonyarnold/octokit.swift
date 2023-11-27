@@ -1,118 +1,89 @@
 import Foundation
-import RequestKit
-#if canImport(FoundationNetworking)
-import FoundationNetworking
-#endif
 
 public extension Octokit {
-    /**
-     Fetches all the starred repositories for a user
-     - parameter name: The user who starred repositories.
-     */
+    /// Fetches all the starred repositories for a user
+    /// - parameter name: The user who starred repositories.
     func stars(name: String) async throws -> [Repository] {
-        let router = StarsRouter.readStars(name, configuration)
-        return try await router.load(session, dateDecodingStrategy: .formatted(Time.rfc3339DateFormatter), expectedResultType: [Repository].self)
+        let request = URLRequestBuilder(path: "users/\(name)/starred")
+            .method(.get)
+            .accept(.applicationGitHubJSON)
+            .configureAuthorization(using: configuration)
+            .makeRequest(withBaseURL: configuration.apiEndpoint)
+
+        return try await session.json(for: request, decoder: decoder)
     }
 
-    /**
-     Fetches all the starred repositories for the authenticated user
-     - Returns: The repos which the authenticated user stars.
-     */
+    /// Fetches all the starred repositories for the authenticated user
+    /// - Returns: The repos which the authenticated user stars.
     func myStars() async throws -> [Repository] {
-        let router = StarsRouter.readAuthenticatedStars(configuration)
-        return try await router.load(session, dateDecodingStrategy: .formatted(Time.rfc3339DateFormatter), expectedResultType: [Repository].self)
+        let request = URLRequestBuilder(path: "users/starred")
+            .method(.get)
+            .accept(.applicationGitHubJSON)
+            .configureAuthorization(using: configuration)
+            .makeRequest(withBaseURL: configuration.apiEndpoint)
+
+        return try await session.json(for: request, decoder: decoder)
     }
 
-    /**
-     Checks if a repository is starred by the authenticated user
-     - parameter owner: The name of the owner of the repository.
-     - parameter repository: The name of the repository.
-     - Returns: If the repository is starred by the authenticated user
-     */
-    func star(owner: String,
-              repository: String) async throws -> Bool {
-        let router = StarsRouter.readStar(configuration, owner, repository)
+    /// Checks if a repository is starred by the authenticated user
+    /// - parameter owner: The name of the owner of the repository.
+    /// - parameter repository: The name of the repository.
+    /// - Returns: If the repository is starred by the authenticated user
+    func star(
+        owner: String,
+        repository: String
+    ) async throws -> Bool {
+        let request = URLRequestBuilder(path: "user/starred/\(owner)/\(repository)")
+            .method(.get)
+            .accept(.applicationGitHubJSON)
+            .configureAuthorization(using: configuration)
+            .makeRequest(withBaseURL: configuration.apiEndpoint)
+
         do {
-            try await router.load(session)
+            try await session.sendRequest(for: request)
             return true
-        } catch let error as NSError where error.code == 404 {
-            return false
+        } catch let error as APIRequestRouterError {
+            switch error {
+                case let .unsuccessfulRequest(statusCode, _) where statusCode == 404:
+                    return false
+
+                default:
+                    throw error
+            }
         } catch {
             throw error
         }
     }
 
-    /**
-     Stars a repository for the authenticated user
-     - parameter owner: The name of the owner of the repository.
-     - parameter repository: The name of the repository.
-     */
-    func putStar(owner: String,
-                 repository: String) async throws {
-        let router = StarsRouter.putStar(configuration, owner, repository)
-        try await router.load(session)
+    /// Stars a repository for the authenticated user
+    /// - parameter owner: The name of the owner of the repository.
+    /// - parameter repository: The name of the repository.
+    func putStar(
+        owner: String,
+        repository: String
+    ) async throws {
+        let request = URLRequestBuilder(path: "user/starred/\(owner)/\(repository)")
+            .method(.put)
+            .accept(.applicationGitHubJSON)
+            .configureAuthorization(using: configuration)
+            .makeRequest(withBaseURL: configuration.apiEndpoint)
+
+        try await session.sendRequest(for: request)
     }
 
-    /**
-     Unstars a repository for the authenticated user
-     - parameter owner: The name of the owner of the repository.
-     - parameter repository: The name of the repository.
-     */
-    func deleteStar(owner: String,
-                    repository: String) async throws {
-        let router = StarsRouter.deleteStar(configuration, owner, repository)
-        try await router.load(session)
-    }
-}
+    /// Unstars a repository for the authenticated user
+    /// - parameter owner: The name of the owner of the repository.
+    /// - parameter repository: The name of the repository.
+    func deleteStar(
+        owner: String,
+        repository: String
+    ) async throws {
+        let request = URLRequestBuilder(path: "user/starred/\(owner)/\(repository)")
+            .method(.delete)
+            .accept(.applicationGitHubJSON)
+            .configureAuthorization(using: configuration)
+            .makeRequest(withBaseURL: configuration.apiEndpoint)
 
-enum StarsRouter: Router {
-    case readAuthenticatedStars(Configuration)
-    case readStars(String, Configuration)
-    case readStar(Configuration, String, String)
-    case putStar(Configuration, String, String)
-    case deleteStar(Configuration, String, String)
-
-    var method: HTTPMethod {
-        switch self {
-        case .readAuthenticatedStars, .readStars, .readStar:
-            return .GET
-        case .putStar:
-            return .PUT
-        case .deleteStar:
-            return .DELETE
-        }
-    }
-
-    var configuration: Configuration {
-        switch self {
-        case let .readAuthenticatedStars(config): return config
-        case let .readStars(_, config): return config
-        case let .readStar(config, _, _): return config
-        case let .putStar(config, _, _): return config
-        case let .deleteStar(config, _, _): return config
-        }
-    }
-
-    var encoding: HTTPEncoding {
-        return .url
-    }
-
-    var path: String {
-        switch self {
-        case .readAuthenticatedStars:
-            return "user/starred"
-        case let .readStars(username, _):
-            return "users/\(username)/starred"
-        case let .readStar(_, owner, repository):
-            return "/user/starred/\(owner)/\(repository)"
-        case let .putStar(_, owner, repository):
-            return "/user/starred/\(owner)/\(repository)"
-        case let .deleteStar(_, owner, repository):
-            return "/user/starred/\(owner)/\(repository)"
-        }
-    }
-
-    var params: [String: Any] {
-        return [:]
+        try await session.sendRequest(for: request)
     }
 }

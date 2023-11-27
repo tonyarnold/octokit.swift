@@ -1,10 +1,3 @@
-//
-//  File.swift
-//
-//
-//  Created by Piet Brauer-Kallenberg on 11.12.22.
-//
-
 import ArgumentParser
 import Foundation
 import Rainbow
@@ -14,8 +7,6 @@ struct SortedJSONKeys: AsyncParsableCommand {
 
     @Argument(help: "The file path to sort the JSON Content")
     var filePaths: [String]
-
-    init() {}
 
     mutating func run() async throws {
         for filePath in filePaths {

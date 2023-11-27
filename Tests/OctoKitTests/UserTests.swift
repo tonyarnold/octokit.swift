@@ -2,59 +2,83 @@ import OctoKit
 import XCTest
 
 class UserTests: XCTestCase {
-    // MARK: Actual Request tests
-
     func testGetUser() async throws {
-        let session = OctoKitURLTestSession(expectedURL: "https://api.github.com/users/mietzmithut", expectedHTTPMethod: "GET", jsonFile: "user_mietzmithut", statusCode: 200)
+        let session = try URLSession.mockedSession(
+            url: "https://api.github.com/users/mietzmithut",
+            method: "GET",
+            fileName: "user_mietzmithut"
+        )
+
         let username = "mietzmithut"
         let user = try await Octokit(session: session).user(name: username)
         XCTAssertEqual(user.login, username)
         XCTAssertNotNil(user.createdAt)
-        XCTAssertTrue(session.wasCalled)
     }
 
     func testFailingToGetUser() async throws {
         let username = "notexisting"
-        let session = OctoKitURLTestSession(expectedURL: "https://api.github.com/users/notexisting", expectedHTTPMethod: "GET", jsonFile: nil, statusCode: 404)
+        let session = try URLSession.mockedSession(
+            url: "https://api.github.com/users/notexisting",
+            method: "GET",
+            statusCode: 404,
+            fileName: nil
+        )
 
         do {
             let _ = try await Octokit(session: session).user(name: username)
-            XCTAssert(false, "should not retrieve repositories")
-        } catch let error as NSError {
-            XCTAssertEqual(error.code, 404)
-            XCTAssertEqual(error.domain, OctoKitErrorDomain)
-        } catch {
-            XCTAssert(false, "unexpected error type")
-        }
+            XCTFail("Should not retrieve repositories")
+        } catch let error as APIRequestRouterError {
+            switch error {
+                case let .unsuccessfulRequest(statusCode, _):
+                    XCTAssertEqual(statusCode, 404)
 
-        XCTAssertTrue(session.wasCalled)
+                default:
+                    XCTFail("Unexpected APIRequestRouterError error case")
+            }
+        } catch {
+            XCTFail("Unexpected error type")
+        }
     }
 
     func testGettingAuthenticatedUser() async throws {
         let config = TokenConfiguration("user:12345")
         let headers = Helper.makeAuthHeader(username: "user", password: "12345")
 
-        let session = OctoKitURLTestSession(expectedURL: "https://api.github.com/user", expectedHTTPMethod: "GET", expectedHTTPHeaders: headers, jsonFile: "user_me", statusCode: 200)
-        let user = try await Octokit(config, session: session).me()
+        let session = try URLSession.mockedSession(
+            url: "https://api.github.com/user",
+            method: "GET",
+            headers: headers,
+            fileName: "user_me"
+        )
+
+        let user = try await Octokit(configuration: config, session: session).me()
         XCTAssertEqual(user.login, "pietbrauer")
-        XCTAssertTrue(session.wasCalled)
     }
 
     func testFailToGetAuthenticatedUser() async throws {
         let json = "{\"message\":\"Bad credentials\",\"documentation_url\":\"https://developer.github.com/v3\"}"
-        let session = OctoKitURLTestSession(expectedURL: "https://api.github.com/user", expectedHTTPMethod: "GET", response: json, statusCode: 401)
+
+        let session = try URLSession.mockedSession(
+            url: "https://api.github.com/user",
+            method: "GET",
+            statusCode: 401,
+            rawResponse: json
+        )
 
         do {
             let _ = try await Octokit(session: session).me()
-            XCTAssert(false, "should not retrieve user")
-        } catch let error as NSError {
-            XCTAssertEqual(error.code, 401)
-            XCTAssertEqual(error.domain, OctoKitErrorDomain)
-        } catch {
-            XCTAssert(false, "unexpected error type")
-        }
+            XCTFail("Should not retrieve user")
+        } catch let error as APIRequestRouterError {
+            switch error {
+                case let .unsuccessfulRequest(statusCode, _):
+                    XCTAssertEqual(statusCode, 401)
 
-        XCTAssertTrue(session.wasCalled)
+                default:
+                    XCTFail("Unexpected APIRequestRouterError error case")
+            }
+        } catch {
+            XCTFail("Unexpected error type")
+        }
     }
 
     // MARK: Model Tests

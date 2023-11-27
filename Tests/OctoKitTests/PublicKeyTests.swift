@@ -1,16 +1,19 @@
 import OctoKit
-import RequestKit
 import XCTest
 
 class PublicKeyTests: XCTestCase {
-    // MARK: Actual Request tests
-
     func testPostPublicKey() async throws {
         let config = TokenConfiguration("user:12345")
         let headers = Helper.makeAuthHeader(username: "user", password: "12345")
-        let session = OctoKitURLTestSession(expectedURL: "https://api.github.com/user/keys", expectedHTTPMethod: "POST", expectedHTTPHeaders: headers, jsonFile: "public_key", statusCode: 201)
-        let publicKey = try await Octokit(config, session: session).postPublicKey(publicKey: "test-key", title: "test title")
-        XCTAssertEqual(publicKey, "test-key")
-        XCTAssertTrue(session.wasCalled)
+        let session = try URLSession.mockedSession(
+            url: "https://api.github.com/user/keys",
+            method: "POST",
+            statusCode: 201,
+            headers: headers,
+            fileName: "public_key"
+        )
+
+        let publicKey = try await Octokit(configuration: config, session: session).postPublicKey(title: "test title", key: "test-key")
+        XCTAssertEqual(publicKey.key, "ssh-rsa AAA...")
     }
 }

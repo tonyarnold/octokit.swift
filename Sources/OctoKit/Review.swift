@@ -1,10 +1,8 @@
 import Foundation
-import RequestKit
-#if canImport(FoundationNetworking)
-import FoundationNetworking
-#endif
 
-public struct Review {
+public struct Review: Codable, Identifiable {
+    // MARK: Public
+
     public let body: String
     public let commitID: String
     public let id: Int
@@ -12,22 +10,8 @@ public struct Review {
     public let submittedAt: Date
     public let user: User
 
-    public init(body: String,
-                commitID: String,
-                id: Int,
-                state: State,
-                submittedAt: Date,
-                user: User) {
-        self.body = body
-        self.commitID = commitID
-        self.id = id
-        self.state = state
-        self.submittedAt = submittedAt
-        self.user = user
-    }
-}
+    // MARK: Internal
 
-extension Review: Codable {
     enum CodingKeys: String, CodingKey {
         case body
         case commitID = "commit_id"
@@ -57,6 +41,16 @@ public extension Review {
     }
 
     struct Comment: Codable {
+        enum CodingKeys: String, CodingKey {
+            case path
+            case position
+            case body
+            case line
+            case side
+            case startLine = "start_line"
+            case startSide = "start_side"
+        }
+
         var path: String
         var position: Int?
         var body: String
@@ -67,119 +61,58 @@ public extension Review {
     }
 }
 
-extension Review.Comment {
-    enum CodingKeys: String, CodingKey {
-        case path
-        case position
-        case body
-        case line
-        case side
-        case startLine = "start_line"
-        case startSide = "start_side"
-    }
-}
-
 public extension Octokit {
-        func listReviews(owner: String,
-                 repository: String,
-                 pullRequestNumber: Int) async throws -> [Review] {
-        let router = ReviewsRouter.listReviews(configuration, owner, repository, pullRequestNumber)
-        return try await router.load(session, dateDecodingStrategy: .formatted(Time.rfc3339DateFormatter), expectedResultType: [Review].self)
+    func listReviews(
+        owner: String,
+        repository: String,
+        pullRequestNumber: Int
+    ) async throws -> [Review] {
+        let request = URLRequestBuilder(path: "repos/\(owner)/\(repository)/pulls/\(pullRequestNumber)/reviews")
+            .method(.get)
+            .accept(.applicationGitHubJSON)
+            .configureAuthorization(using: configuration)
+            .makeRequest(withBaseURL: configuration.apiEndpoint)
+
+        return try await session.json(for: request, decoder: decoder)
     }
 
-        @discardableResult
-    func postReview(owner: String,
-                    repository: String,
-                    pullRequestNumber: Int,
-                    commitId: String? = nil,
-                    event: Review.Event,
-                    body: String? = nil,
-                    comments: [Review.Comment] = []) async throws -> Review {
-        let router = ReviewsRouter.postReview(configuration, owner, repository, pullRequestNumber, commitId, event, body, comments)
-        return try await router.load(session, dateDecodingStrategy: .formatted(Time.rfc3339DateFormatter), expectedResultType: Review.self)
-    }
-}
+    @discardableResult
+    func postReview(
+        owner: String,
+        repository: String,
+        pullRequestNumber: Int,
+        commitID: String? = nil,
+        event: Review.Event,
+        body: String? = nil,
+        comments: [Review.Comment] = []
+    ) async throws -> Review {
+        struct Body: Codable {
+            var commitID: String?
+            var event: Review.Event
+            var body: String?
+            var comments: [Review.Comment]
 
-enum ReviewsRouter: JSONPostRouter {
-    case listReviews(Configuration, String, String, Int)
-    case postReview(Configuration, String, String, Int, String?, Review.Event?, String?, [Review.Comment]?)
-
-    var method: HTTPMethod {
-        switch self {
-        case .listReviews:
-            return .GET
-        case .postReview:
-            return .POST
-        }
-    }
-
-    var encoding: HTTPEncoding {
-        switch self {
-        case .postReview:
-            return .json
-        default:
-            return .url
-        }
-    }
-
-    var configuration: Configuration {
-        switch self {
-        case let .listReviews(config, _, _, _):
-            return config
-        case let .postReview(config, _, _, _, _, _, _, _):
-            return config
-        }
-    }
-
-    var params: [String: Any] {
-        switch self {
-        case .listReviews:
-            return [:]
-        case let .postReview(_, _, _, _, commitId, event, body, comments):
-            var parameters = [String: Any]()
-            if let commitId = commitId {
-                parameters["commit_id"] = commitId
+            enum CodingKeys: String, CodingKey {
+                case commitID = "commit_id"
+                case event
+                case body
+                case comments
             }
-            if let event = event {
-                parameters["event"] = event.rawValue
-            }
-            if let body = body {
-                parameters["body"] = body
-            }
-            if let comments = comments {
-                parameters["comments"] = comments.map { comment -> [String: Any] in
-                    var parameters: [String: Any] = [
-                        "path": comment.path,
-                        "body": comment.body
-                    ]
-                    if let position = comment.position {
-                        parameters["position"] = position
-                    }
-                    if let line = comment.line {
-                        parameters["line"] = line
-                    }
-                    if let side = comment.side {
-                        parameters["side"] = side
-                    }
-                    if let startLine = comment.startLine {
-                        parameters["start_line"] = startLine
-                    }
-                    if let startSide = comment.startSide {
-                        parameters["start_side"] = startSide
-                    }
-                    return parameters
-                }
-            }
-            return parameters
         }
-    }
 
-    var path: String {
-        switch self {
-        case let .listReviews(_, owner, repository, pullRequestNumber):
-            return "repos/\(owner)/\(repository)/pulls/\(pullRequestNumber)/reviews"
-        case let .postReview(_, owner, repository, pullRequestNumber, _, _, _, _):
-            return "repos/\(owner)/\(repository)/pulls/\(pullRequestNumber)/reviews"
-        }
+        let body = Body(
+            commitID: commitID,
+            event: event,
+            body: body,
+            comments: comments
+        )
+        let request = try URLRequestBuilder(path: "repos/\(owner)/\(repository)/pulls/\(pullRequestNumber)/reviews")
+            .method(.post)
+            .accept(.applicationGitHubJSON)
+            .jsonBody(body, encoder: encoder, setContentLength: true)
+            .configureAuthorization(using: configuration)
+            .makeRequest(withBaseURL: configuration.apiEndpoint)
+
+        return try await session.json(for: request, decoder: decoder)
     }
 }

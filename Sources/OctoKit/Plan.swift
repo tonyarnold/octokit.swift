@@ -1,24 +1,30 @@
-// MARK: model
-
 /// The plan of a GitHub user.
 ///
 /// GitHub Apps with the `Plan` user permission can retrieve information about a user's GitHub plan.
 /// The GitHub App must be authenticated as a user.
 open class Plan: Codable {
-    open var name: String?
-    open var space: Int?
-    open var numberOfCollaborators: Int?
-    open var numberOfPrivateRepos: Int?
+    // MARK: Lifecycle
 
-    public init(name: String? = nil,
-                space: Int? = nil,
-                numberOfCollaborators: Int? = nil,
-                numberOfPrivateRepos: Int? = nil) {
+    public init(
+        name: String? = nil,
+        space: Int? = nil,
+        numberOfCollaborators: Int? = nil,
+        numberOfPrivateRepos: Int? = nil
+    ) {
         self.name = name
         self.space = space
         self.numberOfCollaborators = numberOfCollaborators
         self.numberOfPrivateRepos = numberOfPrivateRepos
     }
+
+    // MARK: Open
+
+    open var name: String?
+    open var space: Int?
+    open var numberOfCollaborators: Int?
+    open var numberOfPrivateRepos: Int?
+
+    // MARK: Internal
 
     enum CodingKeys: String, CodingKey {
         case name

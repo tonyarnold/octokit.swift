@@ -1,89 +1,47 @@
 import Foundation
-import RequestKit
-#if canImport(FoundationNetworking)
-import FoundationNetworking
-#endif
 
-// MARK: model
+open class User: Codable, Identifiable {
+    // MARK: Lifecycle
 
-open class User: Codable {
-    open internal(set) var id: Int
-    open var login: String?
-    open var avatarURL: String?
-    open var gravatarID: String?
-    open var type: String?
-    open var name: String?
-    open var company: String?
-    open var blog: String?
-    open var location: String?
-    open var email: String?
-    open var numberOfPublicRepos: Int?
-    open var numberOfPublicGists: Int?
-    open var numberOfPrivateRepos: Int?
-    open var nodeID: String?
-    open var url: String?
-    open var htmlURL: String?
-    open var followersURL: String?
-    open var followingURL: String?
-    open var gistsURL: String?
-    open var starredURL: String?
-    open var subscriptionsURL: String?
-    open var reposURL: String?
-    open var eventsURL: String?
-    open var receivedEventsURL: String?
-    open var siteAdmin: Bool?
-    open var hireable: Bool?
-    open var bio: String?
-    open var twitterUsername: String?
-    open var numberOfFollowers: Int?
-    open var numberOfFollowing: Int?
-    open var createdAt: Date?
-    open var updatedAt: Date?
-    open var numberOfPrivateGists: Int?
-    open var numberOfOwnPrivateRepos: Int?
-    open var amountDiskUsage: Int?
-    open var numberOfCollaborators: Int?
-    open var twoFactorAuthenticationEnabled: Bool?
-    open var subscriptionPlan: Plan?
-
-    public init(id: Int = -1,
-                login: String? = nil,
-                avatarURL: String? = nil,
-                gravatarID: String? = nil,
-                type: String? = nil,
-                name: String? = nil,
-                company: String? = nil,
-                blog: String? = nil,
-                location: String? = nil,
-                email: String? = nil,
-                numberOfPublicRepos: Int? = nil,
-                numberOfPublicGists: Int? = nil,
-                numberOfPrivateRepos: Int? = nil,
-                nodeID: String? = nil,
-                url: String? = nil,
-                htmlURL: String? = nil,
-                followersURL: String? = nil,
-                followingURL: String? = nil,
-                gistsURL: String? = nil,
-                starredURL: String? = nil,
-                subscriptionsURL: String? = nil,
-                reposURL: String? = nil,
-                eventsURL: String? = nil,
-                receivedEventsURL: String? = nil,
-                siteAdmin: Bool? = nil,
-                hireable: Bool? = nil,
-                bio: String? = nil,
-                twitterUsername: String? = nil,
-                numberOfFollowers: Int? = nil,
-                numberOfFollowing: Int? = nil,
-                createdAt: Date? = nil,
-                updatedAt: Date? = nil,
-                numberOfPrivateGists: Int? = nil,
-                numberOfOwnPrivateRepos: Int? = nil,
-                amountDiskUsage: Int? = nil,
-                numberOfCollaborators: Int? = nil,
-                twoFactorAuthenticationEnabled: Bool? = nil,
-                subscriptionPlan: Plan? = nil) {
+    public init(
+        id: Int = -1,
+        login: String? = nil,
+        avatarURL: String? = nil,
+        gravatarID: String? = nil,
+        type: String? = nil,
+        name: String? = nil,
+        company: String? = nil,
+        blog: String? = nil,
+        location: String? = nil,
+        email: String? = nil,
+        numberOfPublicRepos: Int? = nil,
+        numberOfPublicGists: Int? = nil,
+        numberOfPrivateRepos: Int? = nil,
+        nodeID: String? = nil,
+        url: String? = nil,
+        htmlURL: String? = nil,
+        followersURL: String? = nil,
+        followingURL: String? = nil,
+        gistsURL: String? = nil,
+        starredURL: String? = nil,
+        subscriptionsURL: String? = nil,
+        reposURL: String? = nil,
+        eventsURL: String? = nil,
+        receivedEventsURL: String? = nil,
+        siteAdmin: Bool? = nil,
+        hireable: Bool? = nil, bio: String? = nil,
+        twitterUsername: String? = nil,
+        numberOfFollowers: Int? = nil,
+        numberOfFollowing: Int? = nil,
+        createdAt: Date? = nil,
+        updatedAt: Date? = nil,
+        numberOfPrivateGists: Int? = nil,
+        numberOfOwnPrivateRepos: Int? = nil,
+        amountDiskUsage: Int? = nil,
+        numberOfCollaborators: Int? = nil,
+        twoFactorAuthenticationEnabled: Bool? = nil,
+        subscriptionPlan: Plan? = nil
+    ) {
         self.id = id
         self.login = login
         self.avatarURL = avatarURL
@@ -123,6 +81,49 @@ open class User: Codable {
         self.twoFactorAuthenticationEnabled = twoFactorAuthenticationEnabled
         self.subscriptionPlan = subscriptionPlan
     }
+
+    // MARK: Open
+
+    open internal(set) var id: Int
+    open var login: String?
+    open var avatarURL: String?
+    open var gravatarID: String?
+    open var type: String?
+    open var name: String?
+    open var company: String?
+    open var blog: String?
+    open var location: String?
+    open var email: String?
+    open var numberOfPublicRepos: Int?
+    open var numberOfPublicGists: Int?
+    open var numberOfPrivateRepos: Int?
+    open var nodeID: String?
+    open var url: String?
+    open var htmlURL: String?
+    open var followersURL: String?
+    open var followingURL: String?
+    open var gistsURL: String?
+    open var starredURL: String?
+    open var subscriptionsURL: String?
+    open var reposURL: String?
+    open var eventsURL: String?
+    open var receivedEventsURL: String?
+    open var siteAdmin: Bool?
+    open var hireable: Bool?
+    open var bio: String?
+    open var twitterUsername: String?
+    open var numberOfFollowers: Int?
+    open var numberOfFollowing: Int?
+    open var createdAt: Date?
+    open var updatedAt: Date?
+    open var numberOfPrivateGists: Int?
+    open var numberOfOwnPrivateRepos: Int?
+    open var amountDiskUsage: Int?
+    open var numberOfCollaborators: Int?
+    open var twoFactorAuthenticationEnabled: Bool?
+    open var subscriptionPlan: Plan?
+
+    // MARK: Internal
 
     enum CodingKeys: String, CodingKey {
         case id
@@ -169,55 +170,26 @@ open class User: Codable {
 // MARK: request
 
 public extension Octokit {
-    /**
-     Fetches a user or organization
-     - parameter name: The name of the user or organization.
-     */
-        func user(name: String) async throws -> User {
-        let router = UserRouter.readUser(name, configuration)
-        return try await router.load(session, dateDecodingStrategy: .formatted(Time.rfc3339DateFormatter), expectedResultType: User.self)
+    /// Fetches a user or organization
+    /// - parameter name: The name of the user or organization.
+    func user(name: String) async throws -> User {
+        let request = URLRequestBuilder(path: "users/\(name)")
+            .method(.get)
+            .accept(.applicationGitHubJSON)
+            .configureAuthorization(using: configuration)
+            .makeRequest(withBaseURL: configuration.apiEndpoint)
+
+        return try await session.json(for: request, decoder: decoder)
     }
 
-    /**
-     Fetches the authenticated user
-     */
-        func me() async throws -> User {
-        let router = UserRouter.readAuthenticatedUser(configuration)
-        return try await router.load(session, dateDecodingStrategy: .formatted(Time.rfc3339DateFormatter), expectedResultType: User.self)
-    }
-}
+    /// Fetches the authenticated user
+    func me() async throws -> User {
+        let request = URLRequestBuilder(path: "user")
+            .method(.get)
+            .accept(.applicationGitHubJSON)
+            .configureAuthorization(using: configuration)
+            .makeRequest(withBaseURL: configuration.apiEndpoint)
 
-// MARK: Router
-
-enum UserRouter: Router {
-    case readAuthenticatedUser(Configuration)
-    case readUser(String, Configuration)
-
-    var configuration: Configuration {
-        switch self {
-        case let .readAuthenticatedUser(config): return config
-        case let .readUser(_, config): return config
-        }
-    }
-
-    var method: HTTPMethod {
-        return .GET
-    }
-
-    var encoding: HTTPEncoding {
-        return .url
-    }
-
-    var path: String {
-        switch self {
-        case .readAuthenticatedUser:
-            return "user"
-        case let .readUser(username, _):
-            return "users/\(username)"
-        }
-    }
-
-    var params: [String: Any] {
-        return [:]
+        return try await session.json(for: request, decoder: decoder)
     }
 }

@@ -1,96 +1,105 @@
 import Foundation
-import RequestKit
-#if canImport(FoundationNetworking)
-import FoundationNetworking
-#endif
 
-public let githubBaseURL = "https://api.github.com"
-public let githubWebURL = "https://github.com"
+public let githubBaseURL = URL(string: "https://api.github.com")!
+public let githubWebURL = URL(string: "https://github.com")!
 
-public let OctoKitErrorDomain = "com.nerdishbynature.octokit"
+public protocol Configuration {
+    var apiEndpoint: URL { get }
+    var accessToken: String? { get }
+    var accessTokenFieldName: String { get }
+    var authorizationHeader: String? { get }
+    var customHeaders: [HTTPHeaderField]? { get }
+}
 
-public struct TokenConfiguration: Configuration {
-    public var apiEndpoint: String
-    public var accessToken: String?
-    public let errorDomain = OctoKitErrorDomain
-    public private(set) var authorizationHeader: String? = "Basic"
+public extension Configuration {
+    var accessTokenFieldName: String { "access_token" }
 
-    /// Custom `Accept` header for API previews.
-    ///
-    /// Used for preview support of new APIs, for instance Reaction API.
-    /// see: https://developer.github.com/changes/2016-05-12-reactions-api-preview/
-    private var previewCustomHeaders: [HTTPHeader]?
+    var authorizationHeader: String? { nil }
 
-    public var customHeaders: [HTTPHeader]? {
-        // More (non-preview) headers can be appended if needed in the future
-        return previewCustomHeaders
-    }
+    var customHeaders: [HTTPHeaderField]? { nil }
 
-    public init(_ token: String? = nil, url: String = githubBaseURL, previewHeaders: [PreviewHeader] = []) {
-        apiEndpoint = url
-        accessToken = token?.data(using: .utf8)!.base64EncodedString()
-        previewCustomHeaders = previewHeaders.map { $0.header }
-    }
+    var authorizationHeaderValue: String? {
+        guard let authorizationHeader, let accessToken else {
+            return nil
+        }
 
-    public init(bearerToken: String, url: String = githubBaseURL, previewHeaders: [PreviewHeader] = []) {
-        apiEndpoint = url
-        authorizationHeader = "Bearer"
-        accessToken = bearerToken
-        previewCustomHeaders = previewHeaders.map { $0.header }
+        return "\(authorizationHeader) \(accessToken)"
     }
 }
 
-public struct OAuthConfiguration: Configuration {
-    public var apiEndpoint: String
-    public var accessToken: String?
-    public let token: String
-    public let secret: String
-    public let scopes: [String]
-    public let webEndpoint: String
-    public let errorDomain = OctoKitErrorDomain
+public struct TokenConfiguration: Configuration {
+    // MARK: Lifecycle
 
-    /// Custom `Accept` header for API previews.
-    ///
-    /// Used for preview support of new APIs, for instance Reaction API.
-    /// see: https://developer.github.com/changes/2016-05-12-reactions-api-preview/
-    private var previewCustomHeaders: [HTTPHeader]?
-    private let session: RequestKitURLSession
-
-    public var customHeaders: [HTTPHeader]? {
-        // More (non-preview) headers can be appended if needed in the future
-        return previewCustomHeaders
+    public init(_ token: String? = nil, url: URL = githubBaseURL) {
+        accessToken = token?.data(using: .utf8)!.base64EncodedString()
+        apiEndpoint = url
     }
 
-    public init(_ url: String = githubBaseURL,
-                webURL: String = githubWebURL,
-                token: String,
-                secret: String,
-                scopes: [String],
-                previewHeaders: [PreviewHeader] = [],
-                session: RequestKitURLSession = URLSession.shared) {
+    public init(bearerToken: String, url: URL = githubBaseURL) {
+        apiEndpoint = url
+        authorizationHeader = "Bearer"
+        accessToken = bearerToken
+    }
+
+    // MARK: Public
+
+    public var apiEndpoint: URL
+    public var accessToken: String?
+    public private(set) var authorizationHeader: String? = "Basic"
+}
+
+public struct OAuthConfiguration: Configuration {
+    // MARK: Lifecycle
+
+    public init(
+        _ url: URL = githubBaseURL,
+        webURL: URL = githubWebURL,
+        token: String,
+        secret: String,
+        scopes: [String],
+        session: URLSession = .shared
+    ) {
         apiEndpoint = url
         webEndpoint = webURL
         self.token = token
         self.secret = secret
         self.scopes = scopes
         self.session = session
-        previewCustomHeaders = previewHeaders.map { $0.header }
     }
 
+    // MARK: Public
+
+    public var apiEndpoint: URL
+    public var accessToken: String?
+    public let token: String
+    public let secret: String
+    public let scopes: [String]
+    public let webEndpoint: URL
+
     public func authenticate() -> URL? {
-        return OAuthRouter.authorize(self).URLRequest?.url
+        let request = URLRequestBuilder(path: "login/oauth/authorize")
+            .method(.get)
+            .accept(.applicationGitHubJSON)
+            .queryItem(name: "scope", value: scopes.joined(separator: ","))
+            .queryItem(name: "client_id", value: token)
+            .queryItem(name: "allow_signup", value: "false")
+            .makeRequest(withBaseURL: apiEndpoint)
+
+        return request.url
     }
 
     public func authorize(code: String) async throws -> TokenConfiguration? {
-        guard 
-            let request = OAuthRouter.accessToken(self, code).URLRequest
-        else {
-            return nil
-        }
+        let request = URLRequestBuilder(path: "login/oauth/authorize")
+            .method(.get)
+            .accept(.applicationGitHubJSON)
+            .queryItem(name: "client_id", value: token)
+            .queryItem(name: "client_secret", value: secret)
+            .queryItem(name: "code", value: code)
+            .makeRequest(withBaseURL: apiEndpoint)
 
         let (data, response) = try await session.data(for: request, delegate: nil)
 
-        guard 
+        guard
             let response = response as? HTTPURLResponse, response.statusCode == 200,
             let string = String(data: data, encoding: .utf8),
             let accessToken = accessTokenFromResponse(string)
@@ -98,12 +107,11 @@ public struct OAuthConfiguration: Configuration {
             return nil
         }
 
-
         return TokenConfiguration(accessToken, url: apiEndpoint)
     }
 
     public func handleOpenURL(url: URL) async throws -> TokenConfiguration? {
-        guard let code = url.URLParameters["code"] else {
+        guard let code = url.queryParameters["code"] else {
             return nil
         }
 
@@ -117,72 +125,13 @@ public struct OAuthConfiguration: Configuration {
         }
         return nil
     }
+
+    // MARK: Private
+
+    private let session: URLSession
 }
 
-enum OAuthRouter: Router {
-    case authorize(OAuthConfiguration)
-    case accessToken(OAuthConfiguration, String)
-
-    var configuration: Configuration {
-        switch self {
-        case let .authorize(config): return config
-        case let .accessToken(config, _): return config
-        }
-    }
-
-    var method: HTTPMethod {
-        switch self {
-        case .authorize:
-            return .GET
-        case .accessToken:
-            return .POST
-        }
-    }
-
-    var encoding: HTTPEncoding {
-        switch self {
-        case .authorize:
-            return .url
-        case .accessToken:
-            return .form
-        }
-    }
-
-    var path: String {
-        switch self {
-        case .authorize:
-            return "login/oauth/authorize"
-        case .accessToken:
-            return "login/oauth/access_token"
-        }
-    }
-
-    var params: [String: Any] {
-        switch self {
-        case let .authorize(config):
-            let scope = (config.scopes as NSArray).componentsJoined(by: ",")
-            return ["scope": scope, "client_id": config.token, "allow_signup": "false"]
-        case let .accessToken(config, code):
-            return ["client_id": config.token, "client_secret": config.secret, "code": code]
-        }
-    }
-
-    #if canImport(FoundationNetworking)
-    typealias FoundationURLRequestType = FoundationNetworking.URLRequest
-    #else
-    typealias FoundationURLRequestType = Foundation.URLRequest
-    #endif
-
-    var URLRequest: FoundationURLRequestType? {
-        switch self {
-        case let .authorize(config):
-            let url = URL(string: path, relativeTo: URL(string: config.webEndpoint)!)
-            let components = URLComponents(url: url!, resolvingAgainstBaseURL: true)
-            return request(components!, parameters: params)
-        case let .accessToken(config, _):
-            let url = URL(string: path, relativeTo: URL(string: config.webEndpoint)!)
-            let components = URLComponents(url: url!, resolvingAgainstBaseURL: true)
-            return request(components!, parameters: params)
-        }
-    }
+public struct HTTPHeaderField: Codable {
+    var name: String
+    var value: String?
 }

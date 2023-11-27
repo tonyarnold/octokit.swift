@@ -1,11 +1,3 @@
-//
-//  ReleasesTests.swift
-//  OctoKitTests
-//
-//  Created by Antoine van der Lee on 31/01/2020.
-//  Copyright © 2020 nerdish by nature. All rights reserved.
-//
-
 import OctoKit
 import XCTest
 
@@ -14,19 +6,22 @@ final class ReleasesTests: XCTestCase {
 
     func testListReleasesCustomLimit() async throws {
         let perPage = (0 ... 50).randomElement()!
-        let session = OctoKitURLTestSession(expectedURL: "https://api.github.com/repos/octocat/Hello-World/releases?per_page=\(perPage)",
-                                            expectedHTTPMethod: "GET",
-                                            jsonFile: "releases",
-                                            statusCode: 200)
+        let session = try URLSession.mockedSession(
+            url: "https://api.github.com/repos/octocat/Hello-World/releases?per_page=\(perPage)",
+            method: "GET",
+            fileName: "releases"
+        )
+
         let _ = try await Octokit(session: session).listReleases(owner: "octocat", repository: "Hello-World", perPage: perPage)
-        XCTAssertTrue(session.wasCalled)
     }
 
     func testListReleases() async throws {
-        let session = OctoKitURLTestSession(expectedURL: "https://api.github.com/repos/octocat/Hello-World/releases?per_page=30",
-                                            expectedHTTPMethod: "GET",
-                                            jsonFile: "releases",
-                                            statusCode: 200)
+        let session = try URLSession.mockedSession(
+            url: "https://api.github.com/repos/octocat/Hello-World/releases?per_page=30",
+            method: "GET",
+            fileName: "releases"
+        )
+
         let releases = try await Octokit(session: session).listReleases(owner: "octocat", repository: "Hello-World")
         XCTAssertEqual(releases.count, 2)
         if let release = releases.first {
@@ -55,14 +50,15 @@ final class ReleasesTests: XCTestCase {
         } else {
             XCTFail("Failed to unwrap `releases.last`")
         }
-        XCTAssertTrue(session.wasCalled)
     }
 
     func testGetLatestRelease() async throws {
-        let session = OctoKitURLTestSession(expectedURL: "https://api.github.com/repos/octocat/Hello-World/releases/latest",
-                                            expectedHTTPMethod: "GET",
-                                            jsonFile: "latest_release",
-                                            statusCode: 200)
+        let session = try URLSession.mockedSession(
+            url: "https://api.github.com/repos/octocat/Hello-World/releases/latest",
+            method: "GET",
+            fileName: "latest_release"
+        )
+
         let release = try await Octokit(session: session).getLatestRelease(owner: "octocat", repository: "Hello-World")
         XCTAssertNotNil(release)
 
@@ -78,31 +74,40 @@ final class ReleasesTests: XCTestCase {
     }
 
     func testPostRelease() async throws {
-        let session = OctoKitURLTestSession(expectedURL: "https://api.github.com/repos/octocat/Hello-World/releases", expectedHTTPMethod: "POST", jsonFile: "post_release", statusCode: 201)
-        let release = try await Octokit(session: session).postRelease(owner: "octocat",
-                                                                      repository: "Hello-World",
-                                                                      tagName: "v1.0.0",
-                                                                      targetCommitish: "master",
-                                                                      name: "v1.0.0 Release",
-                                                                      body: "The changelog of this release",
-                                                                      prerelease: false,
-                                                                      draft: false,
-                                                                      generateNotes: false)
+        let session = try URLSession.mockedSession(
+            url: "https://api.github.com/repos/octocat/Hello-World/releases",
+            method: "POST",
+            statusCode: 201,
+            fileName: "post_release"
+        )
+
+        let release = try await Octokit(session: session).postRelease(
+            owner: "octocat",
+            repository: "Hello-World",
+            tagName: "v1.0.0",
+            targetCommitish: "master",
+            name: "v1.0.0 Release",
+            body: "The changelog of this release",
+            prerelease: false,
+            draft: false,
+            generateNotes: false
+        )
         XCTAssertEqual(release.tagName, "v1.0.0")
         XCTAssertEqual(release.commitish, "master")
         XCTAssertEqual(release.name, "v1.0.0 Release")
         XCTAssertEqual(release.body, "The changelog of this release")
         XCTAssertFalse(release.prerelease)
         XCTAssertFalse(release.draft)
-
-        XCTAssertTrue(session.wasCalled)
     }
 
     func testReleaseTagName() async throws {
-        let session = OctoKitURLTestSession(expectedURL: "https://api.github.com/repos/octocat/Hello-World/releases/tags/v1.0.0",
-                                            expectedHTTPMethod: "GET",
-                                            jsonFile: "release",
-                                            statusCode: 201)
+        let session = try URLSession.mockedSession(
+            url: "https://api.github.com/repos/octocat/Hello-World/releases/tags/v1.0.0",
+            method: "GET",
+            statusCode: 201,
+            fileName: "release"
+        )
+
         let release = try await Octokit(session: session).release(owner: "octocat", repository: "Hello-World", tag: "v1.0.0")
         XCTAssertEqual(release.tagName, "v1.0.0")
         XCTAssertEqual(release.commitish, "master")
@@ -112,7 +117,6 @@ final class ReleasesTests: XCTestCase {
         XCTAssertFalse(release.draft)
         XCTAssertEqual(release.tarballURL?.absoluteString, "https://api.github.com/repos/octocat/Hello-World/tarball/v1.0.0")
         XCTAssertEqual(release.zipballURL?.absoluteString, "https://api.github.com/repos/octocat/Hello-World/zipball/v1.0.0")
-        XCTAssertEqual(release.publishedAt, Date(timeIntervalSince1970: 1361993732.0))
-        XCTAssertTrue(session.wasCalled)
+        XCTAssertEqual(release.publishedAt, Date(timeIntervalSince1970: 1_361_993_732.0))
     }
 }

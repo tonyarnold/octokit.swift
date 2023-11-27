@@ -1,12 +1,10 @@
 import Foundation
-import RequestKit
-#if canImport(FoundationNetworking)
-import FoundationNetworking
-#endif
 
 // MARK: model
 
-open class Gist: Codable {
+open class Gist: Codable, Identifiable {
+    // MARK: Open
+
     open private(set) var id: String?
     open var url: URL?
     open var forksURL: URL?
@@ -24,39 +22,7 @@ open class Gist: Codable {
     open var user: User?
     open var owner: User?
 
-    public init(id: String? = nil,
-                url: URL? = nil,
-                forksURL: URL? = nil,
-                commitsURL: URL? = nil,
-                gitPushURL: URL? = nil,
-                gitPullURL: URL? = nil,
-                commentsURL: URL? = nil,
-                htmlURL: URL? = nil,
-                files: Files,
-                publicGist: Bool? = nil,
-                createdAt: Date? = nil,
-                updatedAt: Date? = nil,
-                description: String? = nil,
-                comments: Int? = nil,
-                user: User? = nil,
-                owner: User? = nil) {
-        self.id = id
-        self.url = url
-        self.forksURL = forksURL
-        self.commitsURL = commitsURL
-        self.gitPushURL = gitPushURL
-        self.gitPullURL = gitPullURL
-        self.commentsURL = commentsURL
-        self.htmlURL = htmlURL
-        self.files = files
-        self.publicGist = publicGist
-        self.createdAt = createdAt
-        self.updatedAt = updatedAt
-        self.description = description
-        self.comments = comments
-        self.user = user
-        self.owner = owner
-    }
+    // MARK: Internal
 
     enum CodingKeys: String, CodingKey {
         case id
@@ -81,144 +47,130 @@ open class Gist: Codable {
 // MARK: request
 
 public extension Octokit {
-    /**
-     Fetches the gists of the authenticated user
-     - parameter page: Current page for gist pagination. `1` by default.
-     - parameter perPage: Number of gists per page. `100` by default.
-     */
-        func myGists(page: String = "1", perPage: String = "100") async throws -> [Gist] {
-        let router = GistRouter.readAuthenticatedGists(configuration, page, perPage)
-        return try await router.load(session, dateDecodingStrategy: .formatted(Time.rfc3339DateFormatter), expectedResultType: [Gist].self)
+    /// Fetches the gists of the authenticated user
+    /// - parameter page: Current page for gist pagination. `1` by default.
+    /// - parameter perPage: Number of gists per page. `100` by default.
+    func myGists(
+        page: Int = 1,
+        perPage: Int = 100
+    ) async throws -> [Gist] {
+        let request = URLRequestBuilder(path: "gists")
+            .method(.get)
+            .accept(.applicationGitHubJSON)
+            .queryItem(name: "page", value: "\(page)")
+            .queryItem(name: "per_page", value: "\(perPage)")
+            .configureAuthorization(using: configuration)
+            .makeRequest(withBaseURL: configuration.apiEndpoint)
+
+        return try await session.json(for: request, decoder: decoder)
     }
 
-    /**
-     Fetches the gists of the specified user
-     - parameter owner: The username who owns the gists.
-     - parameter page: Current page for gist pagination. `1` by default.
-     - parameter perPage: Number of gists per page. `100` by default.
-     */
-        func gists(owner: String, page: String = "1", perPage: String = "100") async throws -> [Gist] {
-        let router = GistRouter.readGists(configuration, owner, page, perPage)
-        return try await router.load(session, dateDecodingStrategy: .formatted(Time.rfc3339DateFormatter), expectedResultType: [Gist].self)
+    /// Fetches the gists of the specified user
+    /// - parameter owner: The username who owns the gists.
+    /// - parameter page: Current page for gist pagination. `1` by default.
+    /// - parameter perPage: Number of gists per page. `100` by default.
+    func gists(
+        owner: String,
+        page: Int = 1,
+        perPage: Int = 100
+    ) async throws -> [Gist] {
+        let request = URLRequestBuilder(path: "users/\(owner)/gists")
+            .method(.get)
+            .accept(.applicationGitHubJSON)
+            .queryItem(name: "page", value: "\(page)")
+            .queryItem(name: "per_page", value: "\(perPage)")
+            .configureAuthorization(using: configuration)
+            .makeRequest(withBaseURL: configuration.apiEndpoint)
+
+        return try await session.json(for: request, decoder: decoder)
     }
 
-    /**
-     Fetches an gist
-     - parameter id: The id of the gist.
-     */
-        func gist(id: String) async throws -> Gist {
-        let router = GistRouter.readGist(configuration, id)
-        return try await router.load(session, dateDecodingStrategy: .formatted(Time.rfc3339DateFormatter), expectedResultType: Gist.self)
+    /// Fetches an gist
+    /// - parameter id: The id of the gist.
+    func gist(id: String) async throws -> Gist {
+        let request = URLRequestBuilder(path: "gists/\(id)")
+            .method(.get)
+            .accept(.applicationGitHubJSON)
+            .configureAuthorization(using: configuration)
+            .makeRequest(withBaseURL: configuration.apiEndpoint)
+
+        return try await session.json(for: request, decoder: decoder)
     }
 
-    /**
-     Creates an gist with a single file.
-     - parameter description: The description of the gist.
-     - parameter filename: The name of the file in the gist.
-     - parameter fileContent: The content of the file in the gist.
-     - parameter publicAccess: The public/private visability of the gist.
-     */
-        func postGistFile(description: String, filename: String, fileContent: String, publicAccess: Bool) async throws -> Gist {
-        let router = GistRouter.postGistFile(configuration, description, filename, fileContent, publicAccess)
-        let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .formatted(Time.rfc3339DateFormatter)
-        return try await router.post(session, decoder: decoder, expectedResultType: Gist.self)
-    }
+    /// Creates an gist with a single file.
+    /// - parameter description: The description of the gist.
+    /// - parameter filename: The name of the file in the gist.
+    /// - parameter fileContent: The content of the file in the gist.
+    /// - parameter isPublic: The public/private visability of the gist.
+    func postGistFile(
+        description: String,
+        filename: String,
+        fileContent: String,
+        isPublic: Bool
+    ) async throws -> Gist {
+        struct Body: Codable {
+            var description: String
+            var files: [String: [String: String]]
+            var isPublic: Bool
 
-    /**
-     Edits an gist with a single file.
-     - parameter id: The of the gist to update.
-     - parameter description: The description of the gist.
-     - parameter filename: The name of the file in the gist.
-     - parameter fileContent: The content of the file in the gist.
-     */
-        func patchGistFile(id: String, description: String, filename: String, fileContent: String) async throws -> Gist {
-        let router = GistRouter.patchGistFile(configuration, id, description, filename, fileContent)
-        let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .formatted(Time.rfc3339DateFormatter)
-        return try await router.post(session, decoder: decoder, expectedResultType: Gist.self)
-    }
-}
-
-// MARK: Router
-
-enum GistRouter: JSONPostRouter {
-    case readAuthenticatedGists(Configuration, String, String)
-    case readGists(Configuration, String, String, String)
-    case readGist(Configuration, String)
-    case postGistFile(Configuration, String, String, String, Bool)
-    case patchGistFile(Configuration, String, String, String, String)
-
-    var method: HTTPMethod {
-        switch self {
-        case .postGistFile, .patchGistFile:
-            return .POST
-        default:
-            return .GET
+            enum CodingKeys: String, CodingKey {
+                case description
+                case files
+                case isPublic = "public"
+            }
         }
+
+        let body = Body(
+            description: description,
+            files: [filename: ["content": fileContent]],
+            isPublic: isPublic
+        )
+
+        let request = try URLRequestBuilder(path: "gists")
+            .method(.post)
+            .contentType(.applicationJSON)
+            .accept(.applicationJSON)
+            .jsonBody(body, encoder: encoder, setContentLength: true)
+            .configureAuthorization(using: configuration)
+            .makeRequest(withBaseURL: configuration.apiEndpoint)
+
+        return try await session.json(for: request, decoder: decoder)
     }
 
-    var encoding: HTTPEncoding {
-        switch self {
-        case .postGistFile, .patchGistFile:
-            return .json
-        default:
-            return .url
-        }
-    }
+    /// Edits an gist with a single file.
+    /// - parameter id: The of the gist to update.
+    /// - parameter description: The description of the gist.
+    /// - parameter filename: The name of the file in the gist.
+    /// - parameter fileContent: The content of the file in the gist.
+    func patchGistFile(
+        id: String,
+        description: String,
+        filename: String,
+        fileContent: String
+    ) async throws -> Gist {
+        struct Body: Codable {
+            var description: String
+            var files: [String: [String: String]]
 
-    var configuration: Configuration {
-        switch self {
-        case let .readAuthenticatedGists(config, _, _): return config
-        case let .readGists(config, _, _, _): return config
-        case let .readGist(config, _): return config
-        case let .postGistFile(config, _, _, _, _): return config
-        case let .patchGistFile(config, _, _, _, _): return config
+            enum CodingKeys: String, CodingKey {
+                case description
+                case files
+            }
         }
-    }
 
-    var params: [String: Any] {
-        switch self {
-        case let .readAuthenticatedGists(_, page, perPage):
-            return ["per_page": perPage, "page": page]
-        case let .readGists(_, _, page, perPage):
-            return ["per_page": perPage, "page": page]
-        case .readGist:
-            return [:]
-        case let .postGistFile(_, description, filename, fileContent, publicAccess):
-            var params = [String: Any]()
-            params["public"] = publicAccess
-            params["description"] = description
-            var file = [String: Any]()
-            file["content"] = fileContent
-            var files = [String: Any]()
-            files[filename] = file
-            params["files"] = files
-            return params
-        case let .patchGistFile(_, _, description, filename, fileContent):
-            var params = [String: Any]()
-            params["description"] = description
-            var file = [String: Any]()
-            file["content"] = fileContent
-            var files = [String: Any]()
-            files[filename] = file
-            params["files"] = files
-            return params
-        }
-    }
+        let body = Body(
+            description: description,
+            files: [filename: ["content": fileContent]]
+        )
 
-    var path: String {
-        switch self {
-        case .readAuthenticatedGists:
-            return "gists"
-        case let .readGists(_, owner, _, _):
-            return "users/\(owner)/gists"
-        case let .readGist(_, id):
-            return "gists/\(id)"
-        case .postGistFile:
-            return "gists"
-        case let .patchGistFile(_, id, _, _, _):
-            return "gists/\(id)"
-        }
+        let request = try URLRequestBuilder(path: "gists/\(id)")
+            .method(.post)
+            .contentType(.applicationJSON)
+            .accept(.applicationJSON)
+            .jsonBody(body, encoder: encoder, setContentLength: true)
+            .configureAuthorization(using: configuration)
+            .makeRequest(withBaseURL: configuration.apiEndpoint)
+
+        return try await session.json(for: request, decoder: decoder)
     }
 }

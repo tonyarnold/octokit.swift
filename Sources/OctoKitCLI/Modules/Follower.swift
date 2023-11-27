@@ -1,22 +1,15 @@
-//
-//  File.swift
-//
-//
-//  Created by Piet Brauer-Kallenberg on 11.12.22.
-//
-
 import ArgumentParser
 import Foundation
 import OctoKit
 import Rainbow
 
 struct Follower: AsyncParsableCommand {
-    public static let configuration = CommandConfiguration(abstract: "Operate on Followes",
-                                                           subcommands: [
-                                                               GetList.self
-                                                           ])
-
-    init() {}
+    public static let configuration = CommandConfiguration(
+        abstract: "Operate on Followes",
+        subcommands: [
+            GetList.self
+        ]
+    )
 }
 
 extension Follower {
@@ -24,20 +17,18 @@ extension Follower {
         @Argument(help: "The name of the user")
         var name: String
 
-        @Argument(help: "The path to put the file in")
-        var filePath: String?
-
         @Flag(help: "Verbose output flag")
-        var verbose: Bool = false
-
-        init() {}
+        var verbose = false
 
         mutating func run() async throws {
-            let session = JSONInterceptingURLSession()
+            let delegate = URLSessionLoggingDelegate(isVerbose: verbose)
+            let session = URLSession(configuration: .default, delegate: delegate, delegateQueue: nil)
             let octokit = Octokit(session: session)
-            _ = try await octokit.followers(name: name)
-            session.verbosePrint(verbose: verbose)
-            try session.printResponseToFileOrConsole(filePath: filePath)
+            let followers = try await octokit.followers(name: name)
+
+            if let string = try prettyPrinted(followers) {
+                print(string.blue)
+            }
         }
     }
 }

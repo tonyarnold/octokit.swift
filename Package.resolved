@@ -10,30 +10,12 @@
       }
     },
     {
-      "identity" : "requestkit",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/nerdishbynature/RequestKit.git",
-      "state" : {
-        "revision" : "8b0258ea2a4345cbcac90509b764faacea12efb0",
-        "version" : "3.2.1"
-      }
-    },
-    {
       "identity" : "swift-argument-parser",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-argument-parser.git",
       "state" : {
         "revision" : "8f4d2753f0e4778c76d5f05ad16c74f707390531",
         "version" : "1.2.3"
-      }
-    },
-    {
-      "identity" : "swiftformat",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/nicklockwood/SwiftFormat",
-      "state" : {
-        "revision" : "cac06079ce883170ab44cb021faad298daeec2a5",
-        "version" : "0.52.10"
       }
     }
   ],

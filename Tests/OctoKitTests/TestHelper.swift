@@ -2,6 +2,14 @@ import Foundation
 import OctoKit
 
 class Helper {
+    class func dataFromFile(named name: String) throws -> Data? {
+        guard let fileURL = jsonFileURL(for: name) else {
+            return nil
+        }
+
+        return try Data(contentsOf: fileURL, options: .uncached)
+    }
+
     class func stringFromFile(_ name: String) -> String? {
         let path = jsonFilePath(for: name)
         return try! String(contentsOfFile: path, encoding: String.Encoding.utf8)
@@ -32,5 +40,9 @@ class Helper {
 
     private class func jsonFilePath(for resourceName: String) -> String {
         return Bundle.module.path(forResource: resourceName, ofType: "json", inDirectory: "Fixtures")!
+    }
+
+    private class func jsonFileURL(for resourceName: String) -> URL? {
+        return Bundle.module.url(forResource: resourceName, withExtension: "json", subdirectory: "Fixtures")
     }
 }

@@ -1,16 +1,12 @@
 import Foundation
-import RequestKit
-#if canImport(FoundationNetworking)
-import FoundationNetworking
-#endif
 
-// MARK: - Model
+open class Status: Codable, Identifiable {
+    // MARK: Open
 
-open class Status: Codable {
     open private(set) var id: Int = -1
     open var url: String?
     open var avatarURL: String?
-    open var nodeId: String?
+    open var nodeID: String?
     open var state: State?
     open var description: String?
     open var targetURL: String?
@@ -19,35 +15,22 @@ open class Status: Codable {
     open var updatedAt: Date?
     open var creator: User?
 
-    public init(id: Int,
-                url: String? = nil,
-                avatarURL: String? = nil,
-                nodeId: String? = nil,
-                state: State? = nil,
-                description: String? = nil,
-                targetURL: String? = nil,
-                context: String? = nil,
-                createdAt: Date? = nil,
-                updatedAt: Date? = nil,
-                creator: User? = nil) {
-        self.id = id
-        self.url = url
-        self.avatarURL = avatarURL
-        self.nodeId = nodeId
-        self.state = state
-        self.description = description
-        self.targetURL = targetURL
-        self.context = context
-        self.createdAt = createdAt
-        self.updatedAt = updatedAt
-        self.creator = creator
+    // MARK: Public
+
+    public enum State: String, Codable {
+        case error
+        case failure
+        case pending
+        case success
     }
+
+    // MARK: Internal
 
     enum CodingKeys: String, CodingKey {
         case id
         case url
         case avatarURL = "avatar_url"
-        case nodeId = "node_id"
+        case nodeID = "node_id"
         case state
         case description
         case targetURL = "target_url"
@@ -56,124 +39,82 @@ open class Status: Codable {
         case updatedAt = "updated_at"
         case creator
     }
-
-    public enum State: String, Codable {
-        case error
-        case failure
-        case pending
-        case success
-    }
 }
 
 // MARK: - Request
 
 public extension Octokit {
-    /**
-     Creates a commit status
-     - parameter owner: The user or organization that owns the repository.
-     - parameter repository: The name of the repository.
-     - parameter sha: The commit SHA.
-     - parameter state: The state of the status. Can be one of `.error`, `.failure`, `.pending`, or `.success`.
-     - parameter targetURL: The target URL to associate with this status. This URL will be linked from the GitHub UI to allow users to easily see the source of the status.
-     - parameter description: A short description of the status.
-     - parameter context: A string label to differentiate this status from the status of other systems.
-     */
-        func createCommitStatus(owner: String,
-                            repository: String,
-                            sha: String,
-                            state: Status.State,
-                            targetURL: String? = nil,
-                            description: String? = nil,
-                            context: String? = nil) async throws -> Status {
-        let router = StatusesRouter.createCommitStatus(configuration, owner: owner, repo: repository, sha: sha, state: state, targetURL: targetURL, description: description, context: context)
-        let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .formatted(Time.rfc3339DateFormatter)
-        return try await router.post(session, decoder: decoder, expectedResultType: Status.self)
-    }
+    /// Creates a commit status
+    /// - parameter owner: The user or organization that owns the repository.
+    /// - parameter repository: The name of the repository.
+    /// - parameter sha: The commit SHA.
+    /// - parameter state: The state of the status. Can be one of `.error`, `.failure`, `.pending`, or `.success`.
+    /// - parameter targetURL: The target URL to associate with this status. This URL will be linked from the GitHub UI to allow users to easily see the source of the status.
+    /// - parameter description: A short description of the status.
+    /// - parameter context: A string label to differentiate this status from the status of other systems.
+    func createCommitStatus(
+        owner: String,
+        repository: String,
+        sha: String,
+        state: Status.State,
+        targetURL: String? = nil,
+        description: String? = nil,
+        context: String? = nil
+    ) async throws -> Status {
+        struct Body: Codable {
+            var state: Status.State
+            var targetURL: String?
+            var description: String?
+            var context: String?
 
-    /**
-     Fetches commit statuses for a reference
-     - parameter owner: The user or organization that owns the repository.
-     - parameter repository: The name of the repository.
-     - parameter ref: SHA, a branch name, or a tag name.
-     - parameter page: The page to request.
-     - parameter perPage: The number of pulls to return on each page, max is 100.
-     */
-        func listCommitStatuses(owner: String,
-                            repository: String,
-                            ref: String,
-                            page: String? = nil,
-                            perPage: String? = nil) async throws -> [Status] {
-        let router = StatusesRouter.listCommitStatuses(configuration, owner: owner, repo: repository, ref: ref, page: page, perPage: perPage)
-        return try await router.load(session, dateDecodingStrategy: .formatted(Time.rfc3339DateFormatter), expectedResultType: [Status].self)
-    }
-}
-
-// MARK: - Router
-
-enum StatusesRouter: JSONPostRouter {
-    case createCommitStatus(Configuration, owner: String, repo: String, sha: String, state: Status.State, targetURL: String?, description: String?, context: String?)
-    case listCommitStatuses(Configuration, owner: String, repo: String, ref: String, page: String?, perPage: String?)
-
-    var method: HTTPMethod {
-        switch self {
-        case .createCommitStatus:
-            return .POST
-        case .listCommitStatuses:
-            return .GET
-        }
-    }
-
-    var encoding: HTTPEncoding {
-        switch self {
-        case .createCommitStatus:
-            return .json
-        case .listCommitStatuses:
-            return .url
-        }
-    }
-
-    var configuration: Configuration {
-        switch self {
-        case let .createCommitStatus(config, _, _, _, _, _, _, _):
-            return config
-        case let .listCommitStatuses(config, _, _, _, _, _):
-            return config
-        }
-    }
-
-    var params: [String: Any] {
-        switch self {
-        case let .createCommitStatus(_, _, _, _, state, targetURL, description, context):
-            var params: [String: Any] = ["state": state.rawValue]
-            if let targetURL = targetURL {
-                params["target_url"] = targetURL
+            enum CodingKeys: String, CodingKey {
+                case state
+                case targetURL = "target_url"
+                case description
+                case context
             }
-            if let description = description {
-                params["description"] = description
-            }
-            if let context = context {
-                params["context"] = context
-            }
-            return params
-        case let .listCommitStatuses(_, _, _, _, page, perPage):
-            var params = [String: Any]()
-            if let page = page {
-                params["page"] = page
-            }
-            if let perPage = perPage {
-                params["per_page"] = perPage
-            }
-            return [:]
         }
+
+        let body = Body(state: state, targetURL: targetURL, description: description, context: context)
+        let request = try URLRequestBuilder(path: "repos/\(owner)/\(repository)/statuses/\(sha)")
+            .method(.post)
+            .accept(.applicationGitHubJSON)
+            .jsonBody(body, encoder: encoder, setContentLength: true)
+            .configureAuthorization(using: configuration)
+            .makeRequest(withBaseURL: configuration.apiEndpoint)
+
+        return try await session.json(for: request, decoder: decoder)
     }
 
-    var path: String {
-        switch self {
-        case let .createCommitStatus(_, owner, repo, sha, _, _, _, _):
-            return "repos/\(owner)/\(repo)/statuses/\(sha)"
-        case let .listCommitStatuses(_, owner, repo, ref, _, _):
-            return "repos/\(owner)/\(repo)/commits/\(ref)/statuses"
+    /// Fetches commit statuses for a reference
+    /// - parameter owner: The user or organization that owns the repository.
+    /// - parameter repository: The name of the repository.
+    /// - parameter ref: SHA, a branch name, or a tag name.
+    /// - parameter page: The page to request.
+    /// - parameter perPage: The number of pulls to return on each page, max is 100.
+    func listCommitStatuses(
+        owner: String,
+        repository: String,
+        ref: String,
+        page: Int? = nil,
+        perPage: Int? = nil
+    ) async throws -> [Status] {
+        var request = URLRequestBuilder(path: "repos/\(owner)/\(repository)/commits/\(ref)/statuses")
+            .method(.get)
+            .accept(.applicationGitHubJSON)
+            .configureAuthorization(using: configuration)
+
+        if let page {
+            request = request.queryItem(name: "page", value: "\(page)")
         }
+
+        if let perPage {
+            request = request.queryItem(name: "per_page", value: "\(perPage)")
+        }
+
+        return try await session.json(
+            for: request.makeRequest(withBaseURL: configuration.apiEndpoint),
+            decoder: decoder
+        )
     }
 }

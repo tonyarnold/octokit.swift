@@ -1,23 +1,16 @@
-//
-//  File.swift
-//
-//
-//  Created by Piet Brauer-Kallenberg on 11.12.22.
-//
-
 import ArgumentParser
 import Foundation
 import OctoKit
 import Rainbow
 
 struct Label: AsyncParsableCommand {
-    public static let configuration = CommandConfiguration(abstract: "Operate on Labels",
-                                                           subcommands: [
-                                                               Get.self,
-                                                               GetList.self
-                                                           ])
-
-    init() {}
+    public static let configuration = CommandConfiguration(
+        abstract: "Operate on Labels",
+        subcommands: [
+            Get.self,
+            GetList.self
+        ]
+    )
 }
 
 extension Label {
@@ -31,20 +24,17 @@ extension Label {
         @Argument(help: "The name of the label")
         var name: String
 
-        @Argument(help: "The path to put the file in")
-        var filePath: String?
-
         @Flag(help: "Verbose output flag")
-        var verbose: Bool = false
-
-        init() {}
+        var verbose = false
 
         mutating func run() async throws {
-            let session = JSONInterceptingURLSession()
+            let delegate = URLSessionLoggingDelegate(isVerbose: verbose)
+            let session = URLSession(configuration: .default, delegate: delegate, delegateQueue: nil)
             let octokit = Octokit(session: session)
-            _ = try await octokit.label(owner: owner, repository: repository, name: name)
-            session.verbosePrint(verbose: verbose)
-            try session.printResponseToFileOrConsole(filePath: filePath)
+            let label = try await octokit.label(owner: owner, repository: repository, name: name)
+            if let string = try prettyPrinted(label) {
+                print(string.blue)
+            }
         }
     }
 
@@ -55,20 +45,17 @@ extension Label {
         @Argument(help: "The name of the repository")
         var repository: String
 
-        @Argument(help: "The path to put the file in")
-        var filePath: String?
-
         @Flag(help: "Verbose output flag")
-        var verbose: Bool = false
-
-        init() {}
+        var verbose = false
 
         mutating func run() async throws {
-            let session = JSONInterceptingURLSession()
+            let delegate = URLSessionLoggingDelegate(isVerbose: verbose)
+            let session = URLSession(configuration: .default, delegate: delegate, delegateQueue: nil)
             let octokit = Octokit(session: session)
-            _ = try await octokit.labels(owner: owner, repository: repository)
-            session.verbosePrint(verbose: verbose)
-            try session.printResponseToFileOrConsole(filePath: filePath)
+            let labels = try await octokit.labels(owner: owner, repository: repository)
+            if let string = try prettyPrinted(labels) {
+                print(string.blue)
+            }
         }
     }
 }

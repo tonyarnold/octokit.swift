@@ -11,7 +11,13 @@ import XCTest
 
 class ReviewTests: XCTestCase {
     func testReviews() async throws {
-        let session = OctoKitURLTestSession(expectedURL: "https://api.github.com/repos/octocat/Hello-World/pulls/1/reviews", expectedHTTPMethod: "GET", jsonFile: "reviews", statusCode: 201)
+        let session = try URLSession.mockedSession(
+            url: "https://api.github.com/repos/octocat/Hello-World/pulls/1/reviews",
+            method: "GET",
+            statusCode: 201,
+            fileName: "reviews"
+        )
+
         let reviews = try await Octokit(session: session).listReviews(owner: "octocat", repository: "Hello-World", pullRequestNumber: 1)
         let review = reviews.first
         XCTAssertEqual(review?.body, "Here is the body for the review.")
@@ -32,11 +38,16 @@ class ReviewTests: XCTestCase {
         XCTAssertNil(review?.user.numberOfPublicRepos)
         XCTAssertNil(review?.user.numberOfPrivateRepos)
         XCTAssertEqual(review?.user.type, "User")
-        XCTAssertTrue(session.wasCalled)
     }
 
     func testPostReview() async throws {
-        let session = OctoKitURLTestSession(expectedURL: "https://api.github.com/repos/octocat/Hello-World/pulls/1/reviews", expectedHTTPMethod: "POST", jsonFile: "review", statusCode: 200)
+        let session = try URLSession.mockedSession(
+            url: "https://api.github.com/repos/octocat/Hello-World/pulls/1/reviews",
+            method: "POST",
+            statusCode: 200,
+            fileName: "review"
+        )
+
         let review = try await Octokit(session: session).postReview(owner: "octocat",
                                                                     repository: "Hello-World",
                                                                     pullRequestNumber: 1,
@@ -59,6 +70,5 @@ class ReviewTests: XCTestCase {
         XCTAssertNil(review.user.numberOfPublicRepos)
         XCTAssertNil(review.user.numberOfPrivateRepos)
         XCTAssertEqual(review.user.type, "User")
-        XCTAssertTrue(session.wasCalled)
     }
 }
