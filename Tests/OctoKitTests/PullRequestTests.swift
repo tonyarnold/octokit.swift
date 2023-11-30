@@ -5,7 +5,7 @@ class PullRequestTests: XCTestCase {
     func testGetPullRequest() async throws {
         let session = try URLSession.mockedSession(
             url: "https://api.github.com/repos/octocat/Hello-World/pulls/1",
-            method: "GET",
+            method: .get,
             fileName: "pull_request"
         )
 
@@ -35,7 +35,7 @@ class PullRequestTests: XCTestCase {
         // Test filtering with on the base branch
         let session = try URLSession.mockedSession(
             url: "https://api.github.com/repos/octocat/Hello-World/pulls?base=develop&direction=desc&sort=created&state=open",
-            method: "GET",
+            method: .get,
             fileName: "pull_requests"
         )
 
@@ -65,7 +65,7 @@ class PullRequestTests: XCTestCase {
         // Test filtering with on the head branch
         let session = try URLSession.mockedSession(
             url: "https://api.github.com/repos/octocat/Hello-World/pulls?direction=desc&head=octocat%3Anew-topic&sort=created&state=open",
-            method: "GET",
+            method: .get,
             fileName: "pull_requests"
         )
 
@@ -94,7 +94,7 @@ class PullRequestTests: XCTestCase {
     func testUpdatePullRequest() async throws {
         let session = try URLSession.mockedSession(
             url: "https://api.github.com/repos/octocat/Hello-World/pulls/1",
-            method: "PATCH",
+            method: .patch,
             fileName: "pull_request"
         )
 
@@ -125,7 +125,7 @@ class PullRequestTests: XCTestCase {
     func testCreatePullRequest() async throws {
         let session = try URLSession.mockedSession(
             url: "https://api.github.com/repos/octocat/Hello-World/pulls",
-            method: "POST",
+            method: .post,
             fileName: "created_pull_request"
         )
 
@@ -165,7 +165,7 @@ class PullRequestTests: XCTestCase {
     func testListPullRequestsFiles() async throws {
         let session = try URLSession.mockedSession(
             url: "https://api.github.com/repos/octocat/Hello-World/pulls/1347/files",
-            method: "GET",
+            method: .get,
             fileName: "pull_requests_files"
         )
 

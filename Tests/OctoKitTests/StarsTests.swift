@@ -10,7 +10,7 @@ class StarsTests: XCTestCase {
 
         let session = try URLSession.mockedSession(
             url: "https://api.github.com/user/starred",
-            method: "GET",
+            method: .get,
             headers: headers,
             fileName: "user_repos"
         )
@@ -25,7 +25,7 @@ class StarsTests: XCTestCase {
 
         let session = try URLSession.mockedSession(
             url: "https://api.github.com/user/starred",
-            method: "GET",
+            method: .get,
             statusCode: 404,
             headers: headers,
             fileName: nil
@@ -50,7 +50,7 @@ class StarsTests: XCTestCase {
     func testGetUsersStarredRepositories() async throws {
         let session = try URLSession.mockedSession(
             url: "https://api.github.com/users/octocat/starred",
-            method: "GET",
+            method: .get,
             fileName: "user_repos"
         )
 
@@ -61,7 +61,7 @@ class StarsTests: XCTestCase {
     func testFailToGetUsersStarredRepositories() async throws {
         let session = try URLSession.mockedSession(
             url: "https://api.github.com/users/octocat/starred",
-            method: "GET",
+            method: .get,
             statusCode: 404,
             fileName: nil
         )
@@ -85,7 +85,7 @@ class StarsTests: XCTestCase {
     func testGetStarFromNotStarredRepository() async throws {
         let session = try URLSession.mockedSession(
             url: "https://api.github.com/user/starred/octocat/Hello-World",
-            method: "GET",
+            method: .get,
             statusCode: 404,
             fileName: nil
         )
@@ -97,7 +97,7 @@ class StarsTests: XCTestCase {
     func testGetStarFromStarredRepository() async throws {
         let session = try URLSession.mockedSession(
             url: "https://api.github.com/user/starred/octocat/Hello-World",
-            method: "GET",
+            method: .get,
             statusCode: 204,
             fileName: nil
         )
@@ -109,7 +109,7 @@ class StarsTests: XCTestCase {
     func testPutStar() async throws {
         let session = try URLSession.mockedSession(
             url: "https://api.github.com/user/starred/octocat/Hello-World",
-            method: "PUT",
+            method: .put,
             statusCode: 204,
             fileName: nil
         )
@@ -120,7 +120,7 @@ class StarsTests: XCTestCase {
     func testDeleteStar() async throws {
         let session = try URLSession.mockedSession(
             url: "https://api.github.com/user/starred/octocat/Hello-World",
-            method: "DELETE",
+            method: .delete,
             statusCode: 204,
             fileName: nil
         )

@@ -5,7 +5,7 @@ class RepositoryTests: XCTestCase {
     func testGetRepositories() async throws {
         let session = try URLSession.mockedSession(
             url: "https://api.github.com/users/octocat/repos?page=1&per_page=100",
-            method: "GET",
+            method: .get,
             statusCode: 200,
             fileName: "user_repos"
         )
@@ -18,7 +18,7 @@ class RepositoryTests: XCTestCase {
         let config = TokenConfiguration(url: URL(string: "https://enterprise.nerdishbynature.com/api/v3/")!)
         let session = try URLSession.mockedSession(
             url: "https://enterprise.nerdishbynature.com/api/v3/users/octocat/repos?page=1&per_page=100",
-            method: "GET",
+            method: .get,
             fileName: "user_repos"
         )
 
@@ -32,7 +32,7 @@ class RepositoryTests: XCTestCase {
 
         let session = try URLSession.mockedSession(
             url: "https://api.github.com/user/repos?page=1&per_page=100",
-            method: "GET",
+            method: .get,
             headers: headers,
             fileName: "user_repos"
         )
@@ -46,7 +46,7 @@ class RepositoryTests: XCTestCase {
 
         let session = try URLSession.mockedSession(
             url: "https://enterprise.nerdishbynature.com/api/v3/user/repos?page=1&per_page=100",
-            method: "GET",
+            method: .get,
             headers: headers,
             fileName: "user_repos"
         )
@@ -61,7 +61,7 @@ class RepositoryTests: XCTestCase {
         let json = "{\"message\":\"Bad credentials\",\"documentation_url\":\"https://developer.github.com/v3\"}"
         let session = try URLSession.mockedSession(
             url: "https://api.github.com/user/repos?page=1&per_page=100",
-            method: "GET",
+            method: .get,
             statusCode: 401,
             headers: headers,
             rawResponse: json
@@ -87,7 +87,7 @@ class RepositoryTests: XCTestCase {
         let (owner, name) = ("mietzmithut", "Test")
         let session = try URLSession.mockedSession(
             url: "https://api.github.com/repos/mietzmithut/Test",
-            method: "GET",
+            method: .get,
             fileName: "repo"
         )
         let repo = try await Octokit(session: session).repository(owner: owner, name: name)
@@ -100,7 +100,7 @@ class RepositoryTests: XCTestCase {
         let (owner, name) = ("mietzmithut", "Test")
         let session = try URLSession.mockedSession(
             url: "https://enterprise.nerdishbynature.com/api/v3/repos/mietzmithut/Test",
-            method: "GET",
+            method: .get,
             fileName: "repo"
         )
 
@@ -112,7 +112,7 @@ class RepositoryTests: XCTestCase {
     func testFailToGetRepository() async throws {
         let session = try URLSession.mockedSession(
             url: "https://api.github.com/repos/mietzmithut/Test",
-            method: "GET",
+            method: .get,
             statusCode: 404,
             fileName: nil
         )

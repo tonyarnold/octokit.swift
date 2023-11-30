@@ -8,7 +8,7 @@ final class ReleasesTests: XCTestCase {
         let perPage = (0 ... 50).randomElement()!
         let session = try URLSession.mockedSession(
             url: "https://api.github.com/repos/octocat/Hello-World/releases?per_page=\(perPage)",
-            method: "GET",
+            method: .get,
             fileName: "releases"
         )
 
@@ -18,7 +18,7 @@ final class ReleasesTests: XCTestCase {
     func testListReleases() async throws {
         let session = try URLSession.mockedSession(
             url: "https://api.github.com/repos/octocat/Hello-World/releases?per_page=30",
-            method: "GET",
+            method: .get,
             fileName: "releases"
         )
 
@@ -55,7 +55,7 @@ final class ReleasesTests: XCTestCase {
     func testGetLatestRelease() async throws {
         let session = try URLSession.mockedSession(
             url: "https://api.github.com/repos/octocat/Hello-World/releases/latest",
-            method: "GET",
+            method: .get,
             fileName: "latest_release"
         )
 
@@ -76,7 +76,7 @@ final class ReleasesTests: XCTestCase {
     func testPostRelease() async throws {
         let session = try URLSession.mockedSession(
             url: "https://api.github.com/repos/octocat/Hello-World/releases",
-            method: "POST",
+            method: .post,
             statusCode: 201,
             fileName: "post_release"
         )
@@ -103,7 +103,7 @@ final class ReleasesTests: XCTestCase {
     func testReleaseTagName() async throws {
         let session = try URLSession.mockedSession(
             url: "https://api.github.com/repos/octocat/Hello-World/releases/tags/v1.0.0",
-            method: "GET",
+            method: .get,
             statusCode: 201,
             fileName: "release"
         )

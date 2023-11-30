@@ -5,7 +5,7 @@ class UserTests: XCTestCase {
     func testGetUser() async throws {
         let session = try URLSession.mockedSession(
             url: "https://api.github.com/users/mietzmithut",
-            method: "GET",
+            method: .get,
             fileName: "user_mietzmithut"
         )
 
@@ -19,7 +19,7 @@ class UserTests: XCTestCase {
         let username = "notexisting"
         let session = try URLSession.mockedSession(
             url: "https://api.github.com/users/notexisting",
-            method: "GET",
+            method: .get,
             statusCode: 404,
             fileName: nil
         )
@@ -46,7 +46,7 @@ class UserTests: XCTestCase {
 
         let session = try URLSession.mockedSession(
             url: "https://api.github.com/user",
-            method: "GET",
+            method: .get,
             headers: headers,
             fileName: "user_me"
         )
@@ -60,7 +60,7 @@ class UserTests: XCTestCase {
 
         let session = try URLSession.mockedSession(
             url: "https://api.github.com/user",
-            method: "GET",
+            method: .get,
             statusCode: 401,
             rawResponse: json
         )

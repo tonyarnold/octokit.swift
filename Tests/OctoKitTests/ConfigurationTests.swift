@@ -41,7 +41,7 @@ class ConfigurationTests: XCTestCase {
         let response = "access_token=017ec60f4a182&scope=read%3Aorg%2Crepo&token_type=bearer"
         let session = try URLSession.mockedSession(
             url: "https://github.com/login/oauth/access_token",
-            method: "GET",
+            method: .get,
             rawResponse: response
         )
 

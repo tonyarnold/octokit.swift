@@ -8,7 +8,7 @@ class FollowTests: XCTestCase {
 
         let session = try URLSession.mockedSession(
             url: "https://api.github.com/user/followers",
-            method: "GET",
+            method: .get,
             headers: headers,
             fileName: "users"
         )
@@ -20,7 +20,7 @@ class FollowTests: XCTestCase {
     func testGetUsersFollowers() async throws {
         let session = try URLSession.mockedSession(
             url: "https://api.github.com/user/followers",
-            method: "GET",
+            method: .get,
             fileName: "users"
         )
 
@@ -34,7 +34,7 @@ class FollowTests: XCTestCase {
 
         let session = try URLSession.mockedSession(
             url: "https://api.github.com/user/followers",
-            method: "GET",
+            method: .get,
             headers: headers,
             fileName: "users"
         )
@@ -46,7 +46,7 @@ class FollowTests: XCTestCase {
     func testGetUsersFollowing() async throws {
         let session = try URLSession.mockedSession(
             url: "https://api.github.com/user/followers",
-            method: "GET",
+            method: .get,
             fileName: "users"
         )
 

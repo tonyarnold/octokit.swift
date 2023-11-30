@@ -10,7 +10,7 @@ class NotificationTests: XCTestCase {
 
         let session = try URLSession.mockedSession(
             url: "https://api.github.com/notifications?all=false&page=1&participating=false&per_page=100",
-            method: "GET",
+            method: .get,
             headers: headers,
             fileName: "notification_threads"
         )
@@ -25,7 +25,7 @@ class NotificationTests: XCTestCase {
         let headers = Helper.makeAuthHeader(username: "user", password: "12345")
         let session = try URLSession.mockedSession(
             url: "https://api.github.com/notifications?last_read_at=last_read_at&read=false",
-            method: "PUT",
+            method: .put,
             headers: headers,
             fileName: nil
         )
@@ -37,7 +37,7 @@ class NotificationTests: XCTestCase {
         let headers = Helper.makeAuthHeader(username: "user", password: "12345")
         let session = try URLSession.mockedSession(
             url: "https://api.github.com/notifications/threads/1",
-            method: "GET",
+            method: .get,
             headers: headers,
             fileName: "notification_thread"
         )
@@ -51,7 +51,7 @@ class NotificationTests: XCTestCase {
         let headers = Helper.makeAuthHeader(username: "user", password: "12345")
         let session = try URLSession.mockedSession(
             url: "https://api.github.com/notifications/threads/1/subscription",
-            method: "GET",
+            method: .get,
             headers: headers,
             fileName: "notification_thread_subscription"
         )
@@ -65,7 +65,7 @@ class NotificationTests: XCTestCase {
         let headers = Helper.makeAuthHeader(username: "user", password: "12345")
         let session = try URLSession.mockedSession(
             url: "https://api.github.com/notifications/threads/1/subscription",
-            method: "PUT",
+            method: .put,
             headers: headers,
             fileName: "notification_thread_subscription"
         )
@@ -79,7 +79,7 @@ class NotificationTests: XCTestCase {
         let headers = Helper.makeAuthHeader(username: "user", password: "12345")
         let session = try URLSession.mockedSession(
             url: "https://api.github.com/notifications/threads/1/subscription",
-            method: "DELETE",
+            method: .delete,
             headers: headers,
             fileName: nil
         )
@@ -92,7 +92,7 @@ class NotificationTests: XCTestCase {
         let headers = Helper.makeAuthHeader(username: "user", password: "12345")
         let session = try URLSession.mockedSession(
             url: "https://api.github.com/repos/octocat/hello-world/notifications?all=false&page=1&participating=false&perPage=100",
-            method: "GET",
+            method: .get,
             headers: headers,
             fileName: "notification_threads"
         )
@@ -106,7 +106,7 @@ class NotificationTests: XCTestCase {
         let headers = Helper.makeAuthHeader(username: "user", password: "12345")
         let session = try URLSession.mockedSession(
             url: "https://api.github.com/repos/octocat/hello-world/notifications",
-            method: "PUT",
+            method: .put,
             headers: headers,
             fileName: nil
         )

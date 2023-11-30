@@ -16,18 +16,6 @@ public struct URLRequestBuilder {
         self.init(urlComponents: components)
     }
 
-    public enum Method: String {
-        case get = "GET"
-        case post = "POST"
-        case put = "PUT"
-        case head = "HEAD"
-        case delete = "DELETE"
-        case patch = "PATCH"
-        case options = "OPTIONS"
-        case connect = "CONNECT"
-        case trace = "TRACE"
-    }
-
     // MARK: Content Type
 
     public struct ContentType {
@@ -156,7 +144,7 @@ public struct URLRequestBuilder {
         return copy
     }
 
-    public func method(_ method: Method) -> URLRequestBuilder {
+    public func method(_ method: HTTP.Method) -> URLRequestBuilder {
         modifyRequest { $0.httpMethod = method.rawValue }
     }
 

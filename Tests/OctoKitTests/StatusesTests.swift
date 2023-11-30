@@ -5,7 +5,7 @@ class StatusesTests: XCTestCase {
     func testCreateCommitStatus() async throws {
         let session = try URLSession.mockedSession(
             url: "https://api.github.com/repos/octocat/Hello-World/statuses/6dcb09b5b57875f334f61aebed695e2e4193db5e",
-            method: "POST",
+            method: .post,
             statusCode: 201,
             fileName: "status"
         )
@@ -33,7 +33,7 @@ class StatusesTests: XCTestCase {
     func testListCommitStatuses() async throws {
         let session = try URLSession.mockedSession(
             url: "https://api.github.com/repos/octocat/Hello-World/commits/6dcb09b5b57875f334f61aebed695e2e4193db5e/statuses",
-            method: "GET",
+            method: .get,
             fileName: "statuses"
         )
 

@@ -1,5 +1,6 @@
 import Foundation
 import XCTest
+@testable import OctoKit
 
 class MockURLProtocol: URLProtocol {
     static var requestHandler: ((URLRequest) throws -> (HTTPURLResponse, Data?))?
@@ -37,7 +38,7 @@ class MockURLProtocol: URLProtocol {
 extension URLSession {
     static func mockedSession(
         url: String,
-        method: String,
+        method: HTTP.Method,
         statusCode: Int = 200,
         headers: [String: String]? = nil,
         fileName: String?
@@ -54,7 +55,7 @@ extension URLSession {
 
     static func mockedSession(
         url: URL,
-        method: String,
+        method: HTTP.Method,
         statusCode: Int = 200,
         headers: [String: String]? = nil,
         fileName: String?
@@ -66,7 +67,7 @@ extension URLSession {
         MockURLProtocol.requestHandler = { request in
             let url = try XCTUnwrap(request.url)
             XCTAssertEqual(url, url)
-            XCTAssertEqual(request.httpMethod, method)
+            XCTAssertEqual(request.method, method)
 
             let response = try XCTUnwrap(HTTPURLResponse(url: url, statusCode: statusCode, httpVersion: nil, headerFields: headers))
 
@@ -85,7 +86,7 @@ extension URLSession {
 
     static func mockedSession(
         url: String,
-        method: String,
+        method: HTTP.Method,
         statusCode: Int = 200,
         headers: [String: String]? = nil,
         rawResponse: String
@@ -102,7 +103,7 @@ extension URLSession {
 
     static func mockedSession(
         url: URL,
-        method: String,
+        method: HTTP.Method,
         statusCode: Int = 200,
         headers: [String: String]? = nil,
         rawResponse: String
@@ -114,7 +115,7 @@ extension URLSession {
         MockURLProtocol.requestHandler = { request in
             let url = try XCTUnwrap(request.url)
             XCTAssertEqual(url, url)
-            XCTAssertEqual(request.httpMethod, method)
+            XCTAssertEqual(request.method, method)
 
             let response = try XCTUnwrap(HTTPURLResponse(url: url, statusCode: statusCode, httpVersion: nil, headerFields: headers))
 

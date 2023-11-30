@@ -7,7 +7,7 @@ class LabelTests: XCTestCase {
     func testGetLabel() async throws {
         let session = try URLSession.mockedSession(
             url: "https://api.github.com/repos/octocat/hello-world/labels/bug",
-            method: "GET",
+            method: .get,
             fileName: "label"
         )
 
@@ -20,7 +20,7 @@ class LabelTests: XCTestCase {
 
         let session = try URLSession.mockedSession(
             url: "https://api.github.com/repos/octocat/hello-world/labels/help%20wanted",
-            method: "GET",
+            method: .get,
             fileName: nil
         )
 
@@ -30,7 +30,7 @@ class LabelTests: XCTestCase {
     func testGetLabels() async throws {
         let session = try URLSession.mockedSession(
             url: "https://api.github.com/repos/octocat/hello-world/labels?page=1&per_page=100",
-            method: "GET",
+            method: .get,
             fileName: "labels"
         )
 
@@ -42,7 +42,7 @@ class LabelTests: XCTestCase {
         throw XCTSkip("There are not enough labels present in the repository to test this case.")
         let session = try URLSession.mockedSession(
             url: "https://api.github.com/repos/octocat/hello-world/labels?page=2&per_page=50",
-            method: "GET",
+            method: .get,
             fileName: nil
         )
 
@@ -52,7 +52,7 @@ class LabelTests: XCTestCase {
     func testCreateLabel() async throws {
         let session = try URLSession.mockedSession(
             url: "https://api.github.com/repos/octocat/hello-world/labels",
-            method: "POST",
+            method: .post,
             fileName: "label"
         )
 

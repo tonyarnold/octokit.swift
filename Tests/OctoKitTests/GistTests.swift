@@ -12,7 +12,7 @@ class GistTests: XCTestCase {
 
         let session = try URLSession.mockedSession(
             url: "https://api.github.com/gists?page=1&per_page=100",
-            method: "GET",
+            method: .get,
             headers: headers,
             fileName: "gists"
         )
@@ -27,7 +27,7 @@ class GistTests: XCTestCase {
 
         let session = try URLSession.mockedSession(
             url: "https://api.github.com/users/vincode-io/gists?page=1&per_page=100",
-            method: "GET",
+            method: .get,
             headers: headers,
             fileName: "gists"
         )
@@ -39,7 +39,7 @@ class GistTests: XCTestCase {
     func testGetGist() async throws {
         let session = try URLSession.mockedSession(
             url: "https://api.github.com/gists/aa5a315d61ae9438b18d",
-            method: "GET",
+            method: .get,
             fileName: "gist"
         )
         let gist = try await Octokit(session: session).gist(id: "aa5a315d61ae9438b18d")
@@ -49,7 +49,7 @@ class GistTests: XCTestCase {
     func testPostGist() async throws {
         let session = try URLSession.mockedSession(
             url: "https://api.github.com/gists",
-            method: "POST",
+            method: .post,
             fileName: "gist"
         )
 
@@ -64,7 +64,7 @@ class GistTests: XCTestCase {
     func testPatchGist() async throws {
         let session = try URLSession.mockedSession(
             url: "https://api.github.com/gists/aa5a315d61ae9438b18d",
-            method: "POST",
+            method: .post,
             fileName: "gist"
         )
 

@@ -7,7 +7,7 @@ class PublicKeyTests: XCTestCase {
         let headers = Helper.makeAuthHeader(username: "user", password: "12345")
         let session = try URLSession.mockedSession(
             url: "https://api.github.com/user/keys",
-            method: "POST",
+            method: .post,
             statusCode: 201,
             headers: headers,
             fileName: "public_key"

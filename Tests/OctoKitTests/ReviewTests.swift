@@ -13,7 +13,7 @@ class ReviewTests: XCTestCase {
     func testReviews() async throws {
         let session = try URLSession.mockedSession(
             url: "https://api.github.com/repos/octocat/Hello-World/pulls/1/reviews",
-            method: "GET",
+            method: .get,
             statusCode: 201,
             fileName: "reviews"
         )
@@ -43,7 +43,7 @@ class ReviewTests: XCTestCase {
     func testPostReview() async throws {
         let session = try URLSession.mockedSession(
             url: "https://api.github.com/repos/octocat/Hello-World/pulls/1/reviews",
-            method: "POST",
+            method: .post,
             statusCode: 200,
             fileName: "review"
         )

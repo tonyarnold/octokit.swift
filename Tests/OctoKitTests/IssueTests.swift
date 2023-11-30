@@ -10,7 +10,7 @@ class IssueTests: XCTestCase {
 
         let session = try URLSession.mockedSession(
             url: "https://api.github.com/issues?page=1&per_page=100&state=open",
-            method: "GET",
+            method: .get,
             headers: headers,
             fileName: "issues"
         )
@@ -22,7 +22,7 @@ class IssueTests: XCTestCase {
     func testGetIssueAsync() async throws {
         let session = try URLSession.mockedSession(
             url: "https://api.github.com/repos/octocat/Hello-World/issues/1347",
-            method: "GET",
+            method: .get,
             fileName: "issue"
         )
 
@@ -33,7 +33,7 @@ class IssueTests: XCTestCase {
     func testPostIssueAsync() async throws {
         let session = try URLSession.mockedSession(
             url: "https://api.github.com/repos/octocat/Hello-World/issues",
-            method: "POST",
+            method: .post,
             fileName: "issue2"
         )
 
@@ -44,7 +44,7 @@ class IssueTests: XCTestCase {
     func testPostCommentAsync() async throws {
         let session = try URLSession.mockedSession(
             url: "https://api.github.com/repos/octocat/Hello-World/issues/1/comments",
-            method: "POST",
+            method: .post,
             statusCode: 201,
             fileName: "issue_comment"
         )
@@ -56,7 +56,7 @@ class IssueTests: XCTestCase {
     func testCommentsIssueAsync() async throws {
         let session = try URLSession.mockedSession(
             url: "https://api.github.com/repos/octocat/Hello-World/issues/1/comments?page=1&per_page=100",
-            method: "GET",
+            method: .get,
             fileName: "issue_comments"
         )
 
@@ -69,7 +69,7 @@ class IssueTests: XCTestCase {
     func testPatchComment() async throws {
         let session = try URLSession.mockedSession(
             url: "https://api.github.com/repos/octocat/Hello-World/issues/comments/1",
-            method: "PATCH",
+            method: .patch,
             statusCode: 201,
             fileName: "issue_comment"
         )
